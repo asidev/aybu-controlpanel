@@ -4,3 +4,6 @@
 
 def homepage(context, request):
     return {'content': 'Secret content'}
+
+def login(context, request):
+    return {}

@@ -23,7 +23,7 @@ keywords = ''
 include_package_data = True
 zip_safe = False
 requires = ['aybu-website']
-test_suite = 'aybu-controlpanel'
+test_suite = 'aybu.controlpanel'
 
 entry_points = """\
 [paste.app_factory]
@@ -34,10 +34,17 @@ paster_plugins = ['pyramid']
 
 namespace_packages = ['aybu']
 
+message_extractors = {
+    '.': [
+        ('**.py',   'lingua_python', None ),
+    ]
+}
+
 setup(name=name, version=version, description=description,
       long_description=long_description, classifiers=classifiers,
       author=author, author_email=author_email, url=url, keywords=keywords,
       packages=find_packages(), include_package_data=include_package_data,
       zip_safe=zip_safe, install_requires=requires, tests_require=requires,
       test_suite=test_suite, entry_points=entry_points,
+      message_extractors=message_extractors,
       paster_plugins=paster_plugins, namespace_packages=namespace_packages)
