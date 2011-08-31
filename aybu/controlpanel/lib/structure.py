@@ -19,17 +19,6 @@ from sqlalchemy import desc, or_
 
 log = logging.getLogger(__name__)
 
-"""
-def _get_url(nodeinfo):
-    if type(nodeinfo.node) == Page:
-        url = nodeinfo.url
-    elif type(nodeinfo.node) == Section:
-        url = "/{0}".format(nodeinfo.lang.lang)
-        for node in nodeinfo.node.path[1:]:
-            url = "{0}/{1}".format(url, node[nodeinfo.lang].url_part)
-    return url
-"""
-
 def check_url_part(url_part, title):
     if not url_part:
         url_part = title
@@ -37,114 +26,29 @@ def check_url_part(url_part, title):
     url_part = urlify(url_part)
     return url_part
 
-#
-#def get_enabled(request):
-#    enabled = False
-#
-#    try:
-#        enabled_string = request.params.get('enabled', None)
-#        if enabled_string and enabled_string == 'on':
-#            enabled = True
-#    except:
-#        enabled = False
-#
-#    return enabled
-#
-#def get_parent(parent_id=None):
-#    parent = None
-#    if parent_id:
-#        try :
-#            parent = Node.query.filter(Node.id == parent_id).one()
-#            parent = sanitize_parent(parent)
-#        except:
-#            parent = None
-#
-#    log.debug('Parent %s', parent)
-#
-#    return parent
-#
-#
-#def sanitize_parent(parent):
-#
-#    if not parent or (parent.type != 'Page' and parent.type != 'Menu' and \
-#       parent.type != 'Section'):
-#        log.warn('%s cannot have children', parent)
-#        return Menu.query.filter(Menu.weight == 1).one()
-#
-#    return parent
-#
-#def check_url(nodeinfo):
-#
-#    if type(nodeinfo.node) not in (Page, Section):
-#        return
-#
-#    q = NodeInfo.query
-#    q = q.filter(NodeInfo.id != nodeinfo.id)
-#    q = q.filter(NodeInfo.lang == nodeinfo.lang)
-#    q = q.filter(NodeInfo.url_part == nodeinfo.url_part)
-#
-#    if q.count() == 0:
-#        log.debug('No conflict')
-#        return
-#
-#    path = nodeinfo.node.path
-#    url = _get_url(nodeinfo)
-#    #type_ = nodeinfo.node.type
-#
-#    for conflict_nodeinfo in q.all():
-#        log.debug('The nodeinfo is trying to create %s has potential conflict with %s',
-#                  nodeinfo, conflict_nodeinfo)
-#        conflict_path = conflict_nodeinfo.node.path
-#
-#        # If the lenght of the path is different there are no problem
-#        # the duplicated url_part does not create conflict. Instead if
-#        # it is the same we have to check something more
-#        if len(path) == len(conflict_path):
-#
-#            log.debug('Path of the node whe are trying to create has the same lenght of the node with potential conflict')
-#
-#            conflict_url = _get_url(conflict_nodeinfo)
-#
-#            log.debug('Analysing urls to understand if there is conflict beetween %s and %s',
-#                      url, conflict_url)
-#            # If the conflict_url is contained in the url whe are trying to
-#            # add to the system we have to check something more
-#            if conflict_url in url or url in conflict_url:
-#
-#                raise ConstraintException('URL conflict');
-#
-#                """
-#                conflict_type = conflict_nodeinfo.node.type
-#
-#                if type_ == 'Page':
-#                    if conflict_type == 'Page':
-#                        raise ConstraintException('It is not possible to create 2 page with the same url');
-#                    elif conflict_type == 'Section':
-#                        if path[0] == conflict_path[0]:
-#                            raise ConstraintException('URL conflict');
-#
-#                        log.debug('The page %s has been created on different menu in respect to %s', nodeinfo, conflict_nodeinfo)
-#
-#                    else:
-#                        log.debug('You should not be here')
-#                        raise Exception('Strange Conflict NodeInfo type')
-#
-#                elif type_ == 'Section':
-#
-#                    if path[0] == conflict_path[0]:
-#                        raise ConstraintException('URL conflict');
-#
-#                    log.debug('The section %s has been created on different menu in respect to %s', nodeinfo, conflict_nodeinfo)
-#
-#                else:
-#                    log.debug('You should not be here')
-#                    raise Exception('Strange NodeInfo type')
-#
-#
-#                log.debug('The %s creation is sane', type)
-#                """
-#
-#    log.debug('No conflict')
+
+def get_enabled(params):
+    enabled = False
+
+    try:
+        get_enabled = params.get('enabled', None)
+        if get_enabled in ('on', 'ON', True, 'true', 'True', 'TRUE', 'yes', 'ok'):
+            enabled = True
+    except:
+        enabled = False
+
+    return enabled
+
+
+def is_valid_parent(parent):
+
+    if parent is None or not isinstance(parent, (Page, Menu, Section)):
+        log.warn('%s cannot have children', parent)
+        return False
+
+    return True
+
+
 #
 #
 #def _clone_nodeinfo(nodeinfo, dst_language):
@@ -182,8 +86,8 @@ def check_url_part(url_part, title):
 #    dbsession.flush()
 #
 #    check_url(ni)
-#
-#
+
+
 #def clone_nodeinfo(nodeinfo, src_lang):
 #    q = Language.query
 #    q = q.filter(Language.enabled == True)
@@ -210,29 +114,31 @@ def check_url_part(url_part, title):
 #    clone_nodeinfo(nodeinfo, lang)
 #
 #    return nodeinfo
-#
-#
-#def create_node(view=None, weight=None, parent=None, url=None,
-#                enabled=True, linked_to=None,
-#                sitemap_priority=None, type_=Page):
-#
-#    parent = sanitize_parent(parent)
-#
-#    if not weight:
-#        last = Node.query.filter(Node.parent == parent).\
-#                          order_by(desc(Node.weight)).first()
-#
-#        weight = last.weight + 1 if last else 1
-#
-#    params = dict(parent=parent, weight=weight, view=view,
-#                  url=url, linked_to=linked_to, enabled=enabled)
-#    if sitemap_priority:
-#        params['sitemap_priority'] = sitemap_priority
-#
-#    log.info("Creating node: %s", params)
-#    return type_(**params)
-#
-#
+
+
+def create_node(session, view=None, weight=None, parent=None, url=None,
+                enabled=True, linked_to=None,
+                sitemap_priority=None, type_=Page):
+
+    if not is_valid_parent(parent):
+        raise Exception('%s can\'t be a parent' % parent)
+
+    if weight is None:
+        last = session.query(Node).filter(Node.parent == parent).\
+                                   order_by(desc(Node.weight)).first()
+
+        weight = last.weight + 1 if last else 1
+
+    params = dict(parent=parent, weight=weight, view=view,
+                  url=url, linked_to=linked_to, enabled=enabled)
+
+    if not sitemap_priority is None:
+        params['sitemap_priority'] = sitemap_priority
+
+    log.info("Creating node: %s", params)
+    return type_(**params)
+
+
 #def create_page(parent_id, language, label, title, url_part, view,
 #                content=u'', meta_description=u'', head_content=u'',
 #                sitemap_priority=None, enabled=True):

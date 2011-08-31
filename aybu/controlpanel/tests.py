@@ -12,7 +12,12 @@ from logging import getLogger
 from babel import Locale
 
 from aybu.website.lib.database import fill_db
-from aybu.controlpanel.lib.structure import check_url_part
+from aybu.website.models import Menu, Page, Section, InternalLink, ExternalLink
+from aybu.website.models import Node
+from aybu.controlpanel.lib.structure import check_url_part, get_enabled
+from aybu.controlpanel.lib.structure import is_valid_parent
+
+import random
 
 log = getLogger(__name__)
 
@@ -47,18 +52,66 @@ class StructureTests(ModelsTests):
 
         title = 'La nostra storia'
 
-        url_part = 'La nostra storia'
-
         correct_url_part = 'la_nostra_storia'
 
-        generated_url_part = check_url_part(url_part, title)
+        for url_part in (title, None, title.upper(), correct_url_part):
 
-        # Check if the calculated url is equal to the expected result
-        self.assertEqual(correct_url_part, generated_url_part)
+            generated_url_part = check_url_part(url_part, title)
 
-        # Check no spaces are in result
-        self.assertNotIn(' ', generated_url_part)
+            # Check if the calculated url is equal to the expected result
+            self.assertEqual(correct_url_part, generated_url_part)
 
-        # Check no capital letter in result
-        pattern = "[A-Z]"
-        self.assertNotRegexpMatches(generated_url_part, pattern)
+            # Check no spaces are in result
+            self.assertNotIn(' ', generated_url_part)
+
+            # Check no capital letter in result
+            pattern = "[A-Z]"
+            self.assertNotRegexpMatches(generated_url_part, pattern)
+
+        correct_url_part = 'storia'
+
+        for url_part in ('storia  ', 'Storia'):
+
+            generated_url_part = check_url_part(url_part, title)
+
+            # Check if the calculated url is equal to the expected result
+            self.assertEqual(correct_url_part, generated_url_part)
+
+            # Check no spaces are in result
+            self.assertNotIn(' ', generated_url_part)
+
+            # Check no capital letter in result
+            pattern = "[A-Z]"
+            self.assertNotRegexpMatches(generated_url_part, pattern)
+
+    def test_get_enabled(self):
+
+        params = {}
+
+        for enabled in ('on', 'ON', True, 'true', 'True', 'TRUE', 'yes', 'ok'):
+            params['enabled'] = enabled
+            self.assertIs(get_enabled(params), True)
+
+        for enabled in ('off', 'OFF', 'no', False, 'None', 'null', 'none'):
+            params['enabled'] = enabled
+            self.assertIs(get_enabled(params), False)
+
+        self.assertIs(get_enabled(''), False)
+
+    def test_is_valid_parent(self):
+
+        for class_ in (Menu, Page, Section):
+            rand = random.randrange(0, self.session.query(class_).count())
+            row = self.session.query(class_)[rand]
+            self.assertIs(is_valid_parent(row), True)
+
+        for class_ in (InternalLink, ExternalLink):
+            rand = random.randrange(0, self.session.query(class_).count())
+            row = self.session.query(class_)[rand]
+            self.assertIs(is_valid_parent(row), False)
+
+        for instance in (dict(), list(), None, 1, True, False, ''):
+            self.assertIs(is_valid_parent(instance), False)
+
+    def test_create_node(self):
+        
