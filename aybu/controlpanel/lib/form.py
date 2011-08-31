@@ -7,10 +7,10 @@ Copyright © 2010 Asidev s.r.l. - www.asidev.com
 
 import logging
 
-from aybu.cms.model.entities import Setting
-from aybu.cms.lib import validator as v
+from aybu.website.model.setting import Setting
+from aybu.controlpanel.lib import validator as v
 
-from aybu.cms.lib.mail import Mail
+from aybu.controlpanel.lib.mail import Mail
 
 from pyramid.i18n import TranslationString as _
 
@@ -50,7 +50,7 @@ def contact(request):
         message = u"%sCognome : %s \n" % (message, vars['surname'])
         message = u"%sTelefono : %s \n\n" % (message, vars['phone'])
 
-        for key,value in request.params.iteritems():
+        for key, value in request.params.iteritems():
             if key not in ('name', 'surname', 'email', 'phone',
                            'agreement', 'message', 'recaptcha_response_field',
                            'recaptcha_challenge_field', 'submit'):

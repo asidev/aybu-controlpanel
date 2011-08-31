@@ -5,6 +5,7 @@
 Copyright © 2011 Asidev s.r.l. - www.asidev.com
 """
 
+
 class QuotaException(Exception):
     pass
 

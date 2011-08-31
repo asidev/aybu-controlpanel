@@ -10,7 +10,7 @@ import logging
 
 from BeautifulSoup import BeautifulSoup
 
-from aybu.website.models.entities import File, Image, NodeInfo
+from aybu.website.models.file import File, Image, NodeInfo
 
 from pylons import config
 
@@ -88,7 +88,8 @@ def associate_images(obj, soup):
         try:
             src = img['src']
         except:
-            log.debug("The img %s has not src, skipping src investigation", img)
+            log.debug("The img %s has not src, skipping src investigation",
+                      img)
             continue
 
         if src.startswith("http://"):
@@ -132,7 +133,8 @@ def associate_pages(obj, soup):
         try:
             href = a['href']
         except:
-            log.debug("The anchor %s has not href, skipping url investigation", a)
+            log.debug("The anchor %s has not href, skipping url investigation",
+                      a)
             continue
 
         if href.startswith("http://"):
@@ -148,7 +150,8 @@ def associate_pages(obj, soup):
             log.debug("Adding %s to %s", ni, obj)
             obj.links.append(ni)
         except:
-            log.debug("Link is local (%s) but is not referenced to a dynamic page", href)
+            log.debug("Link is local (%s) but is not referenced to a "\
+                      "dynamic page", href)
             continue
 
     log.debug("%s has links to %s", obj, [p for p in obj.links])
@@ -156,6 +159,7 @@ def associate_pages(obj, soup):
               [p for p in old_pages if p not in obj.links], obj)
 
     return soup
+
 
 def update_img_src(img_id, old_name, new_name, soup):
     """ Parse html and found and replace in src the new image name
@@ -169,7 +173,8 @@ def update_img_src(img_id, old_name, new_name, soup):
         try:
             src = img['src']
         except:
-            log.debug("The img %s has not src attribute, skipping src investigation", img)
+            log.debug("The img %s has not src attribute, skipping src "\
+                      "investigation", img)
             continue
 
         if src.startswith("http://"):
@@ -186,6 +191,7 @@ def update_img_src(img_id, old_name, new_name, soup):
 
     return soup
 
+
 def change_href(nodeinfo, old_urls):
     soup = BeautifulSoup(nodeinfo.content, smartQuotesTo=None)
     anchors = soup.findAll('a')
@@ -200,7 +206,8 @@ def change_href(nodeinfo, old_urls):
         try:
             href = a['href']
         except:
-            log.debug("The anchor %s has not href, skipping url investigation", a)
+            log.debug("The anchor %s has not href, skipping url investigation",
+                      a)
             continue
 
         if href.startswith("http://"):
@@ -214,13 +221,13 @@ def change_href(nodeinfo, old_urls):
 
                 new_url = ni.url
 
-                log.debug('Found anchor referenced to %s, will be referenced to %s',
-                          href, new_url)
+                log.debug('Found anchor referenced to %s, will be referenced '\
+                          'to %s', href, new_url)
                 a['href'] = new_url
                 nodeinfo.links.append(ni)
             else:
-                log.debug('The anchor referenced to %s will be removed due to page deletion',
-                          href)
+                log.debug('The anchor referenced to %s will be removed due '\
+                          'to page deletion', href)
 
                 contents = a.contents
                 parent = a.parent
@@ -241,7 +248,8 @@ def change_href(nodeinfo, old_urls):
                 log.debug("Adding %s to %s", ni, nodeinfo)
                 nodeinfo.links.append(ni)
             except Exception as e:
-                log.debug("Link is local (%s) but is not referenced to a dynamic page", href)
+                log.debug("Link is local (%s) but is not referenced to a "\
+                          "dynamic page", href)
                 continue
 
     log.debug("Updating content on db")
