@@ -11,7 +11,7 @@ from logging import getLogger
 
 from babel import Locale
 
-#from aybu.website.lib.database import fill_db
+from aybu.website.lib.database import fill_db
 from aybu.controlpanel.lib.structure import check_url_part
 
 log = getLogger(__name__)
@@ -22,7 +22,6 @@ class ModelsTests(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
 
-        """
         from aybu.website.models.base import Base
         from sqlalchemy import create_engine
         from sqlalchemy.orm import scoped_session
@@ -36,7 +35,6 @@ class ModelsTests(unittest.TestCase):
         Base.metadata.create_all(self.engine)
 
         fill_db(self.session)
-        """
 
     def tearDown(self):
         self.session.remove()
@@ -63,4 +61,4 @@ class StructureTests(ModelsTests):
 
         # Check no capital letter in result
         pattern = "[A-Z]"
-        assertNotRegexpMatches(generated_url_part, pattern)
+        self.assertNotRegexpMatches(generated_url_part, pattern)

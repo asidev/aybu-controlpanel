@@ -34,7 +34,7 @@ def check_url_part(url_part, title):
     if not url_part:
         url_part = title
     url_part = url_part.strip()
-    url_part = urlfy(url_part)
+    url_part = urlify(url_part)
     return url_part
 
 #

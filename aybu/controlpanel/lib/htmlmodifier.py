@@ -12,8 +12,6 @@ from BeautifulSoup import BeautifulSoup
 
 from aybu.website.models import File, Image, NodeInfo
 
-from pylons import config
-
 log = logging.getLogger(__name__)
 
 __all__ = ['associate_images']
