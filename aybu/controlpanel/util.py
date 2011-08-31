@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*
 
 from aybu.website.request import Request as BaseRequest
 from aybu.website.models import Group
@@ -53,4 +55,3 @@ class AuthenticationPolicy(AuthTktAuthenticationPolicy):
             principals += ['group:%s' % g.name for g in request.user.groups]
 
         return principals
-
