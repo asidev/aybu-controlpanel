@@ -7,7 +7,7 @@ Copyright © 2010 Asidev s.r.l. - www.asidev.com
 
 import logging
 
-from aybu.website.model.setting import Setting
+from aybu.website.model import Setting
 from aybu.controlpanel.lib import validator as v
 
 from aybu.controlpanel.lib.mail import Mail
