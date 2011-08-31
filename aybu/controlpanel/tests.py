@@ -11,7 +11,7 @@ from logging import getLogger
 
 from babel import Locale
 
-from aybu.website.lib.database import fill_db
+#from aybu.website.lib.database import fill_db
 from aybu.controlpanel.lib.structure import check_url_part
 
 log = getLogger(__name__)
@@ -64,9 +64,3 @@ class StructureTests(ModelsTests):
         # Check no capital letter in result
         pattern = "[A-Z]"
         assertNotRegexpMatches(generated_url_part, pattern)
-
-
-
-
-
-
