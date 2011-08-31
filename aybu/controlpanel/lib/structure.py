@@ -10,7 +10,7 @@ import logging
 from aybu.controlpanel.lib.exc import ConstraintException, QuotaException
 from aybu.controlpanel.lib.htmlmodifier import change_href
 
-from aybu.website.lib.common import urlfy
+from aybu.website.lib.common import urlify
 from aybu.website.models import Node, NodeInfo, Menu, Page, Section
 from aybu.website.models import InternalLink, ExternalLink
 from aybu.website.models import View, Language
