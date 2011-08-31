@@ -19,25 +19,17 @@ from sqlalchemy import desc, or_
 
 log = logging.getLogger(__name__)
 
+
 def check_url_part(url_part, title):
     if not url_part:
         url_part = title
-    url_part = url_part.strip()
     url_part = urlify(url_part)
     return url_part
 
 
-def get_enabled(params):
-    enabled = False
-
-    try:
-        get_enabled = params.get('enabled', None)
-        if get_enabled in ('on', 'ON', True, 'true', 'True', 'TRUE', 'yes', 'ok'):
-            enabled = True
-    except:
-        enabled = False
-
-    return enabled
+def boolify(value):
+    return True if value in ('on', 'ON', True, 'true', 'True', 'TRUE', 'yes',
+                             'ok', 'y') else False
 
 
 def is_valid_parent(parent):
@@ -116,27 +108,32 @@ def is_valid_parent(parent):
 #    return nodeinfo
 
 
-def create_node(session, view=None, weight=None, parent=None, url=None,
-                enabled=True, linked_to=None,
-                sitemap_priority=None, type_=Page):
+def create_node(session, type_, parent=None, enabled=True, hidden=False,
+                **kwargs):
+
+    if not isinstance(type_, Node):
+        raise ValueError('%s is not a Node instance' % type_)
 
     if not is_valid_parent(parent):
-        raise Exception('%s can\'t be a parent' % parent)
+        raise ValueError('%s cannot be a parent' % parent)
 
-    if weight is None:
-        last = session.query(Node).filter(Node.parent == parent).\
+    # FIX ME use max weight instead
+    q = session.query(func.max(Node.weight)).filter(Node.parent == parent)
+    try:
+        q = q.group_by(Node.weight).one()
+    except:
+        weight = 1
+
+    """
+    last = session.query(Node).filter(Node.parent == parent).\
                                    order_by(desc(Node.weight)).first()
+    weight = last.weight + 1 if last else 1
+    """
 
-        weight = last.weight + 1 if last else 1
+    log.info("Creating node: %s", kwargs)
 
-    params = dict(parent=parent, weight=weight, view=view,
-                  url=url, linked_to=linked_to, enabled=enabled)
-
-    if not sitemap_priority is None:
-        params['sitemap_priority'] = sitemap_priority
-
-    log.info("Creating node: %s", params)
-    return type_(**params)
+    return type_(parent=parent, enabled=enabled, hidden=hidden, weight=weight,
+                 **kwargs)
 
 
 #def create_page(parent_id, language, label, title, url_part, view,
@@ -154,6 +151,8 @@ def create_node(session, view=None, weight=None, parent=None, url=None,
 #        log.warn(error)
 #        raise QuotaException(error)
 #
+#    if not sitemap_priority is None:
+#        params['sitemap_priority'] = sitemap_priority
 #    node = create_node(view=view, type_=Page, enabled=enabled,
 #                       sitemap_priority=sitemap_priority, parent=parent)
 #

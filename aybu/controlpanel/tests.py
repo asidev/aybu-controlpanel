@@ -13,9 +13,9 @@ from babel import Locale
 
 from aybu.website.lib.database import fill_db
 from aybu.website.models import Menu, Page, Section, InternalLink, ExternalLink
-from aybu.website.models import Node
-from aybu.controlpanel.lib.structure import check_url_part, get_enabled
-from aybu.controlpanel.lib.structure import is_valid_parent
+from aybu.website.models import Node, View
+from aybu.controlpanel.lib.structure import check_url_part, boolify
+from aybu.controlpanel.lib.structure import is_valid_parent, create_node
 
 import random
 
@@ -84,19 +84,17 @@ class StructureTests(ModelsTests):
             pattern = "[A-Z]"
             self.assertNotRegexpMatches(generated_url_part, pattern)
 
-    def test_get_enabled(self):
+    def test_boolify(self):
 
         params = {}
 
-        for enabled in ('on', 'ON', True, 'true', 'True', 'TRUE', 'yes', 'ok'):
-            params['enabled'] = enabled
-            self.assertIs(get_enabled(params), True)
+        for enabled in ('on', 'ON', True, 'true', 'True', 'TRUE', 'yes', 'ok',
+                        'y'):
+            self.assertIs(boolify(enabled), True)
 
-        for enabled in ('off', 'OFF', 'no', False, 'None', 'null', 'none'):
-            params['enabled'] = enabled
-            self.assertIs(get_enabled(params), False)
+        for enabled in ('off', 'OFF', 'no', False, 'None', 'null', 'none', ''):
+            self.assertIs(boolify(enabled), False)
 
-        self.assertIs(get_enabled(''), False)
 
     def test_is_valid_parent(self):
 
@@ -114,4 +112,14 @@ class StructureTests(ModelsTests):
             self.assertIs(is_valid_parent(instance), False)
 
     def test_create_node(self):
-        
+        pass
+
+        """
+        rand = random.randrange(0, self.session.query(View).count())
+        view = self.session.query(View)[rand]
+
+
+        create_node(self.session, view=view, weight=None, parent=None, url=None,
+                enabled=True, linked_to=None,
+                sitemap_priority=None, type_=Page)
+        """
