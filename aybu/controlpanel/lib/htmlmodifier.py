@@ -10,7 +10,7 @@ import logging
 
 from BeautifulSoup import BeautifulSoup
 
-from aybu.website.models.file import File, Image, NodeInfo
+from aybu.website.models import File, Image, NodeInfo
 
 from pylons import config
 
