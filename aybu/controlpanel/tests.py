@@ -13,7 +13,7 @@ from babel import Locale
 
 from aybu.website.lib.database import fill_db
 from aybu.website.models import Menu, Page, Section, InternalLink, ExternalLink
-from aybu.website.models import Node, View
+from aybu.website.models import Node, View, NodeInfo
 from aybu.controlpanel.lib.structure import check_url_part, boolify
 from aybu.controlpanel.lib.structure import is_valid_parent, create_node
 
@@ -112,14 +112,20 @@ class StructureTests(ModelsTests):
             self.assertIs(is_valid_parent(instance), False)
 
     def test_create_node(self):
-        pass
 
-        """
-        rand = random.randrange(0, self.session.query(View).count())
-        view = self.session.query(View)[rand]
+        nodes = self.session.query(Node).all()
 
+        for i in xrange(0, len(nodes)):
+            parent = nodes[i]
 
-        create_node(self.session, view=view, weight=None, parent=None, url=None,
-                enabled=True, linked_to=None,
-                sitemap_priority=None, type_=Page)
-        """
+            if is_valid_parent(parent):
+                self.assertIsInstance(create_node(self.session, type_=Section,
+                                                  parent=parent), Section)
+            else:
+                self.assertRaises(ValueError, create_node, self.session,
+                                  type_=Section, parent=parent)
+
+            self.assertRaises(ValueError,create_node, self.session,
+                              type_=NodeInfo, parent=parent)
+
+            self.session.rollback()

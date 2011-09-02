@@ -12,10 +12,10 @@ from aybu.controlpanel.lib.htmlmodifier import change_href
 
 from aybu.website.lib.common import urlify
 from aybu.website.models import Node, NodeInfo, Menu, Page, Section
-from aybu.website.models import InternalLink, ExternalLink
+from aybu.website.models import InternalLink, ExternalLink, Setting
 from aybu.website.models import View, Language
 
-from sqlalchemy import desc, or_
+from sqlalchemy import desc, or_, func
 
 log = logging.getLogger(__name__)
 
@@ -41,8 +41,6 @@ def is_valid_parent(parent):
     return True
 
 
-#
-#
 #def _clone_nodeinfo(nodeinfo, dst_language):
 #    label = '%s [%s_%s]' % (nodeinfo.label, dst_language.lang,
 #                            dst_language.country.upper())
@@ -111,24 +109,19 @@ def is_valid_parent(parent):
 def create_node(session, type_, parent=None, enabled=True, hidden=False,
                 **kwargs):
 
-    if not isinstance(type_, Node):
+    if not issubclass(type_, Node):
         raise ValueError('%s is not a Node instance' % type_)
 
     if not is_valid_parent(parent):
         raise ValueError('%s cannot be a parent' % parent)
 
-    # FIX ME use max weight instead
     q = session.query(func.max(Node.weight)).filter(Node.parent == parent)
     try:
-        q = q.group_by(Node.weight).one()
-    except:
-        weight = 1
+        #pippo = q.group_by(Node.weight).order_by(desc(Node.weight)).first()[0]
+        pippo = q.group_by(Node.weight).all()
 
-    """
-    last = session.query(Node).filter(Node.parent == parent).\
-                                   order_by(desc(Node.weight)).first()
-    weight = last.weight + 1 if last else 1
-    """
+    except Exception as e:
+        weight = 1
 
     log.info("Creating node: %s", kwargs)
 
@@ -136,31 +129,50 @@ def create_node(session, type_, parent=None, enabled=True, hidden=False,
                  **kwargs)
 
 
-#def create_page(parent_id, language, label, title, url_part, view,
-#                content=u'', meta_description=u'', head_content=u'',
-#                sitemap_priority=None, enabled=True):
-#
-#    parent = get_parent(parent_id)
-#
-#    log.debug("create_page: %s, %s, %s, %s, %s",
-#              language, label, title, url_part, view)
-#    num_pages = Page.query.count()
-#    max_pages = SettingsCacheProxy()['max_pages']
-#    if max_pages > 0 and  max_pages <= num_pages:
-#        error = 'Max number of pages (%d) has been reached', max_pages
-#        log.warn(error)
-#        raise QuotaException(error)
-#
-#    if not sitemap_priority is None:
-#        params['sitemap_priority'] = sitemap_priority
-#    node = create_node(view=view, type_=Page, enabled=enabled,
-#                       sitemap_priority=sitemap_priority, parent=parent)
-#
-#    create_nodes_info(node, lang=language, label=label, title=title,
-#                      url_part=url_part, meta_description=meta_description,
-#                      head_content=head_content, content=content)
-#
-#
+def create_page(session, view, parent=None, enabled=True, hidden=False,
+                sitemap_priority=50, banners=[]):
+
+    if not isinstance(view, View):
+        raise ValueError('%s is not a View instance' % view)
+
+    if not new_page_allowed(session):
+        log.error('Max number of pages has been reached')
+        raise QuotaException(error)
+
+    kwargs = {'home':home, 'sitemap_priority':sitemap_priority,
+              'banners':banners}
+
+    return create_node(session, type_=Page, parent=parent, enabled=enabled,
+                       hidden=hidden, home=home, banners=banners,
+                       sitemap_priority=sitemap_priority)
+
+
+
+def create_site_node(session, parametri):
+    # check type (Section, Page)
+    # validate_[type]
+    # create_node()
+    # create nodeinfo with the language of te request
+    # clone nodeinfo in other languages
+
+
+
+
+
+
+"""
+    log.debug("create_page: %s, %s, %s, %s, %s",
+              language, label, title, url_part, view)
+
+
+                language, label, title, url_part,  meta_description=u'',
+                head_content=u'', content=u''):
+    create_nodes_info(node, lang=language, label=label, title=title,
+                      url_part=url_part, meta_description=meta_description,
+                      head_content=head_content, content=content)
+"""
+
+
 #def create_section(parent_id, language, label, title=None, url_part=None,
 #                   sitemap_priority=None, enabled=True):
 #
