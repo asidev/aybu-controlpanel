@@ -28,8 +28,7 @@ def check_url_part(url_part, title):
 
 
 def boolify(value):
-    return True if value in ('on', 'ON', True, 'true', 'True', 'TRUE', 'yes',
-                             'ok', 'y') else False
+    return True if value.lower() in ('on', 'true', 'yes', 'ok', 'y') else False
 
 
 def is_valid_parent(parent):
