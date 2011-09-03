@@ -1,6 +1,6 @@
 
+import aybu.controlpanel.libs.validators as validators
 import aybu.controlpanel.models as models
-import aybu.controlpanel.validators as validators
 
 def load_entity_from_string(entity):
     """ Load an entity class from the models using its string name."""

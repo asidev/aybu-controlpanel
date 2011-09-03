@@ -17,9 +17,7 @@ def index(session, type_, **kwargs):
     return None
 
 def create(session, type_, **kwargs):
-    """
-        Create and return a new node.
-    """
+    """ Create and return a new node."""
     try:
         Entity = load_entity_from_string(type_)
 
