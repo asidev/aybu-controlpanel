@@ -23,7 +23,7 @@ keywords = ''
 include_package_data = True
 zip_safe = False
 requires = ['aybu-website', "PyEnchant>=1.6.3", "BeautifulSoup==3.2.0"]
-test_suite = 'aybu.controlpanel'
+test_suite = 'tests'
 
 entry_points = """\
 [paste.app_factory]
