@@ -1,5 +1,7 @@
 
 from aybu.controlpanel.libs.utils import load_entity_from_string
+from aybu.controlpanel.libs.validators import validate_lineage
+from aybu.controlpanel.models import Node
 import logging
 
 
@@ -23,6 +25,14 @@ def create(session, type_, **kwargs):
 
     except ValueError as e:
         msg = 'type_: entity %s does not exist!' % type_
+        log.debug(msg)
+        raise TypeError(msg)
+
+    try:
+        validate_lineage(Entity, Node)
+
+    except ValueError as e:
+        msg = 'type_: entity %s is not a Node type!' % type_
         log.debug(msg)
         raise TypeError(msg)
 
