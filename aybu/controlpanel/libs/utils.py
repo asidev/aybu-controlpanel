@@ -1,25 +1,47 @@
 
-import aybu.controlpanel.libs.validators as validators
-import aybu.controlpanel.models as models
+import logging
 
-def load_entity_from_string(entity):
-    """ Load an entity class from the models using its string name."""
+log = logging.getLogger(__name__)
 
-    if not isinstance(entity, basestring):
-        entity = str(entity)
 
-    if hasattr(models, entity):
-        return getattr(models, entity)
+def get_object_from_python_path(path):
+    """ Resolve 'path' and return the object identified by it. """
+    
+    if not isinstance(path, basestring):
+        # 'path' can be a class instance. Convert it into a string.
+        path = str(path)
 
-    raise ValueError('No entity named %s exists in the model.' % entity)
+    log.debug('Path: %s', path)
 
-def load_validator_from_string(validator):
-    """ Load a validator callable from 'validators' package using its name."""
+    elements = path.split('.')
+    log.debug('Elements: %s', ' | '.join(elements))
+    target = elements.pop(-1)
+    log.debug('Target: %s', target)
 
-    if not isinstance(validator, basestring):
-        validator = str(validator)
+    if not elements:
+        raise ValueError('Invalid Python path: %s', path)
 
-    if hasattr(validators, validator):
-        return getattr(validators, validator)
+    imported = ''
+    while elements:
 
-    raise ValueError('No validator named %s exists.' % validator)
+        element = elements.pop(0)
+
+        if imported:
+            module = getattr(__import__(imported,
+                                        globals(), locals(), [element], -1),
+                             element)
+            imported += '.' + element
+
+        else:
+            module = __import__(element)
+            imported += element
+
+        log.debug('Element: %s', element)
+        log.debug('Imported: %s', imported)
+        log.debug('Module: %s', module.__name__)
+
+    if not hasattr(module, target):
+        raise ValueError('Invalid Python path: no %s in %s.' % (target,
+                                                                module.__name__))
+
+    return getattr(module, target)

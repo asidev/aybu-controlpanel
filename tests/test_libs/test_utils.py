@@ -18,43 +18,39 @@ class UtilsTests(unittest.TestCase):
     def tearDown(self):
         testing.tearDown()
 
-    def test_load_entity_from_string(self):
+    def test_get_object_from_python_path(self):
 
-        from aybu.controlpanel.models import Node
-        from aybu.controlpanel.models import NodeInfo
-        from aybu.controlpanel.libs.utils import load_entity_from_string
-
-        self.assertRaises(ValueError,
-                          load_entity_from_string, None)
-
-        self.assertRaises(ValueError,
-                          load_entity_from_string, '')
-
-        self.assertRaises(ValueError,
-                          load_entity_from_string, 'dummy_entity_name')
-
-        for name, entity in {'Node': Node, 'NodeInfo': NodeInfo}.iteritems():
-
-            self.assertEqual(entity,
-                             load_entity_from_string(name))
-
-    def test_load_validator_from_string(self):
-
-        from aybu.controlpanel.libs.utils import load_validator_from_string
+        from aybu.controlpanel.libs.utils import get_object_from_python_path
         from aybu.controlpanel.libs.validators import validate_lineage
         from aybu.controlpanel.libs.validators import validate_node
+        from aybu.controlpanel.models import Node
+        from aybu.controlpanel.models import NodeInfo
 
         self.assertRaises(ValueError,
-                          load_validator_from_string, None)
+                          get_object_from_python_path, None)
 
         self.assertRaises(ValueError,
-                          load_validator_from_string, '')
+                          get_object_from_python_path, '')
 
         self.assertRaises(ValueError,
-                          load_validator_from_string, 'dummy_validator_name')
+                          get_object_from_python_path, 'wrong_name')
 
-        for name, validator in {'validate_lineage': validate_lineage,
-                                'validate_node': validate_node}.iteritems():
+        path = 'aybu.controlpanel.models.Node'
+        self.assertEqual(Node,
+                         get_object_from_python_path(path))
 
-            self.assertEqual(validator,
-                             load_validator_from_string(name))
+        path = 'aybu.controlpanel.models.NodeInfo'
+        self.assertEqual(NodeInfo,
+                         get_object_from_python_path(path))
+
+        path = 'aybu.controlpanel.libs.validators.validate_lineage'
+        self.assertEqual(validate_lineage,
+                         get_object_from_python_path(path))
+
+        path = 'aybu.controlpanel.libs.validators.validate_node'
+        self.assertEqual(validate_node,
+                         get_object_from_python_path(path))
+
+        path = 'aybu.controlpanel.libs.validators.wrong_name'
+        self.assertRaises(ValueError,
+                          get_object_from_python_path, path)

@@ -1,4 +1,8 @@
 
+from aybu.controlpanel.libs.utils import get_object_from_python_path
+
+__all__ = []
+
 
 def index(context, request):
     """
@@ -17,8 +21,34 @@ def create(context, request):
         This views is called to create a new node.
         Node type must be specified.
     """
-    # Parsing the request
-    # Call controller create.
+    type_ = request.params.pop('type_', None)
+    # Pop keys from 'request.params':
+    # you cannot send variables to the controller that are not needed.
+
+    try:
+        Entity = get_object_from_python_path('aybu.controlpanel.models' + type_)
+
+    except ValueError as e:
+        msg = 'type_: entity %s does not exist!' % type_
+        log.debug(msg)
+        # FIXME: raise the right HTTP exception!
+        raise TypeError(msg)
+
+    else:
+        controller = 'aybu.controlpanel.libs.controllers.node.create'
+
+    try:
+        controller = get_object_from_python_path(controller)
+
+    except ValueError as e:
+        log.debug('A controller for %s does not exist!' % Entity.__name__)
+        # FIXME: raise the right HTTP exception!
+        log.debug(e)
+        raise e
+
+    else:
+        entity = controller(request.db_session, Entity, **request.params)
+
     # Prepare response
     return None
 
