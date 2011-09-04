@@ -1,4 +1,6 @@
 
+from aybu.controlpanel.models import Page, Menu, Section
+
 def validate_lineage(cls, ancestor):
     """Check if 'cls' is a subclass of 'ancestor'.
 
@@ -16,5 +18,5 @@ def validate_node(id=None, enabled=None, hidden=None, weight=None,
         Function signature contains all attributes of Node
         but 'id', 'enabled', 'hidden', 'weight' and 'children' are not checked.
     """
-    if not isinstance(parent, (Page, Menu, Section)):
-        raise ValueError('%s cannot have children.' % parent.__name__))
+    if not isinstance(parent, (Menu, Section, Page)):
+        raise ValueError('parent: %s cannot have children.' % parent.__name__)

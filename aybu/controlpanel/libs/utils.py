@@ -19,7 +19,7 @@ def load_validator_from_string(validator):
     if not isinstance(validator, basestring):
         validator = str(validator)
 
-    if hasattr(models, validator):
-        return getattr(models, validator)
+    if hasattr(validators, validator):
+        return getattr(validators, validator)
 
     raise ValueError('No validator named %s exists.' % validator)

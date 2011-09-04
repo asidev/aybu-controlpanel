@@ -14,8 +14,8 @@ from babel import Locale
 from aybu.website.lib.database import fill_db
 from aybu.website.models import Menu, Page, Section, InternalLink, ExternalLink
 from aybu.website.models import Node, View, NodeInfo
-from aybu.controlpanel.lib.structure import check_url_part, boolify
-from aybu.controlpanel.lib.structure import is_valid_parent, create_node
+from aybu.controlpanel.libs.structure import check_url_part, boolify
+from aybu.controlpanel.libs.structure import is_valid_parent, create_node
 
 import random
 
