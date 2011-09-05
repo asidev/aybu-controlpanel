@@ -20,11 +20,6 @@ from sqlalchemy import desc, or_, func
 log = logging.getLogger(__name__)
 
 
-def boolify(value):
-    return True if value.lower() in ('on', 'true', 'yes', 'ok', 'y') else False
-
-
-
 def create_page(session, view, parent=None, enabled=True, hidden=False,
                 sitemap_priority=50, banners=[]):
 
