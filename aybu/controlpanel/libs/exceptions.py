@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import logging
 
@@ -7,10 +9,10 @@ log = logging.getLogger(__name__)
 class ValidationError(Exception):
     """This class must be used by validators when they fail during checks.
 
-        'ValidationError' is equal to 'Exception', 
+        'ValidationError' is equal to 'Exception',
         but its string representation is different because
         it force string formatting using self.args.
-        String formatting can fail, in this case 'ValidationError.__repr__' 
+        String formatting can fail, in this case 'ValidationError.__repr__'
         return the same result of 'Exception.__repr__'.
     """
     def __init__(self, *args):

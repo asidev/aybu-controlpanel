@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import logging
 
@@ -42,7 +44,7 @@ def index(session, type_, **kwargs):
         Retrieve and return data to display menus trees.
         HINT: load __FIRST__ level of each menu.
     """
-    # Check node type. 
+    # Check node type.
     # Validate params (based on node type).
     # Call model function to get wanted data.
     return None

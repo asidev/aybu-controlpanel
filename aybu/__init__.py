@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 # (c) 2005 Ian Bicking and contributors;
 # written for Paste (http://pythonpaste.org)
 # Licensed under the MIT license
@@ -18,4 +21,3 @@ except ImportError:
 else:
     for p in __path__:
         modulefinder.AddPackagePath(__name__, p)
-

@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import logging
 
@@ -6,7 +8,7 @@ log = logging.getLogger(__name__)
 
 def get_object_from_python_path(path):
     """ Resolve 'path' and return the object identified by it. """
-    
+
     if not isinstance(path, basestring):
         # 'path' can be a class instance. Convert it into a string.
         path = str(path)

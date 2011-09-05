@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 from aybu.controlpanel.models import Menu
 from aybu.controlpanel.models import Node
