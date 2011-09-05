@@ -5,6 +5,7 @@ import logging
 
 log = logging.getLogger(__name__)
 
+
 def create(session, cls, **params):
     """ Create a persistent 'cls' object and return it."""
 
@@ -21,6 +22,7 @@ def create(session, cls, **params):
 
     return entity
 
+
 def update(session, type_, **kwargs):
     """
         Update and return a node.
@@ -29,6 +31,7 @@ def update(session, type_, **kwargs):
     # Validate params (based on node type).
     # Call model function to get wanted data.
     return None
+
 
 def delete(session, type_, **kwargs):
     """
@@ -39,6 +42,7 @@ def delete(session, type_, **kwargs):
     # Call model function to get wanted data.
     return None
 
+
 def index(session, type_, **kwargs):
     """
         Retrieve and return data to display menus trees.
@@ -48,6 +52,7 @@ def index(session, type_, **kwargs):
     # Validate params (based on node type).
     # Call model function to get wanted data.
     return None
+
 
 def search(session, type_, **kwargs):
     """

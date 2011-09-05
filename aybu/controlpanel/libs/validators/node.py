@@ -13,6 +13,7 @@ __all__ = []
 
 log = logging.getLogger(__name__)
 
+
 def validate_create(session, cls, **params):
     """Validate 'cls' and 'params' following rules of application logic.
 
@@ -30,6 +31,7 @@ def validate_create(session, cls, **params):
     validator = get_object_from_python_path(validator % cls.__name__.lower())
     return validator(session, **params)
 
+
 def validate_lineage(cls, ancestor):
     """Check if 'cls' is a subclass of 'ancestor'.
 
@@ -37,6 +39,7 @@ def validate_lineage(cls, ancestor):
     if not issubclass(cls, ancestor):
         msg = '%s is not a subclass of %s.' % (cls.__name__, ancestor.__name__)
         raise ValueError(msg)
+
 
 def validate_node(session, **params):
     """Validate input values that can be used to create a Node instance.
@@ -58,6 +61,7 @@ def validate_node(session, **params):
         params['weight'] = 1 if weight is None else weight
 
     return params
+
 
 def validate_page(session, **params):
 

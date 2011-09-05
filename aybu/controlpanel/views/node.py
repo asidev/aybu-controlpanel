@@ -35,25 +35,21 @@ def create(context, request):
     try:
         Entity = get_object_from_python_path('aybu.controlpanel.models.%s'
                                              % (type_))
-
     except ValueError as e:
         msg = 'type_: entity %s does not exist!' % type_
         log.debug(msg)
         # FIXME: raise the right HTTP exception!
         raise TypeError(msg)
-
     else:
         controller = 'aybu.controlpanel.libs.controllers.node.create'
 
     try:
         controller = get_object_from_python_path(controller)
-
     except ValueError as e:
         log.debug('A controller for %s does not exist!' % Entity.__name__)
         # FIXME: raise the right HTTP exception!
         log.debug(e)
         raise e
-
     else:
         entity = controller(request.db_session, Entity, **request.params)
 
