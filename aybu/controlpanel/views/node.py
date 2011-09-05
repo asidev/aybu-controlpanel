@@ -1,5 +1,11 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
+import logging
 from aybu.controlpanel.libs.utils import get_object_from_python_path
+
+
+log = logging.getLogger(__name__)
 
 __all__ = []
 
@@ -16,6 +22,7 @@ def index(context, request):
     # Prepare response
     return None
 
+
 def create(context, request):
     """
         This views is called to create a new node.
@@ -26,7 +33,8 @@ def create(context, request):
     # you cannot send variables to the controller that are not needed.
 
     try:
-        Entity = get_object_from_python_path('aybu.controlpanel.models' + type_)
+        Entity = get_object_from_python_path('aybu.controlpanel.models.%s'
+                                             % (type_))
 
     except ValueError as e:
         msg = 'type_: entity %s does not exist!' % type_
@@ -52,6 +60,7 @@ def create(context, request):
     # Prepare response
     return None
 
+
 def update(context, request):
     """
         This views is called to update a node.
@@ -62,6 +71,7 @@ def update(context, request):
     # Prepare response
     return None
 
+
 def delete(context, request):
     """
         This views is called to delete node.
@@ -71,6 +81,7 @@ def delete(context, request):
     # Call controller delete.
     # Prepare response
     return None
+
 
 def search(context, request):
     """
