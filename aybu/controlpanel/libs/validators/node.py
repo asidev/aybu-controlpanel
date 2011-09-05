@@ -46,8 +46,8 @@ def validate_node(session, **params):
             params['parent'] = session.query(Node).get(params['parent'])
 
         #FIXME: This check is needed because the model is wrong!
-        if not isinstance(parent, (Menu, Section, Page)):
-            msg = 'parent: %s cannot have children.' % parent.__name__
+        if not isinstance(params['parent'], (Menu, Section, Page)):
+            msg = 'parent: %s cannot have children.' % params['parent'].__name__
             raise ValidationError(msg)
 
     if params.get('weight') is None:
