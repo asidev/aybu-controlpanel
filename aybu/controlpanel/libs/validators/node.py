@@ -37,13 +37,14 @@ def validate_lineage(cls, ancestor):
         raise ValueError(msg)
 
 def validate_node(session, **params):
-    """Validate input values that can be used to create a Node instance."""
+    """Validate input values that can be used to create a Node instance.
 
+    """
     #FIXME: Is 'parent' mandatory?
     if 'parent' in params:
         if not isinstance(params['parent'], Node):
             # Load Node 'parent' from database.
-            params['parent'] = session.query(Node).get(params['parent'])
+            params['parent'] = Node.get_by_id(params['parent'])
 
         #FIXME: This check is needed because the model is wrong!
         if not isinstance(params['parent'], (Menu, Section, Page)):
