@@ -67,7 +67,7 @@ def search(session, type_, **kwargs):
     return None
 
 
-def move(session, node_id, new_parent_id, previous_node_id, next_node_id):
+def move(session, node_id, new_parent_id, previous_node_id):
     """
         Move a node
     """
@@ -93,14 +93,6 @@ def move(session, node_id, new_parent_id, previous_node_id, next_node_id):
         except Exception as e:
             log.debug('Moved Node %s has no previous sibling', node)
             previous_node = None
-
-        """
-        try:
-            next_node = Node.get_by_id(session, next_node_id)
-        except Exception as e:
-            log.debug('Moved Node %s has no next sibling', node)
-            next_node = None
-        """
 
         # compute weight
         if (not previous_node is None):
