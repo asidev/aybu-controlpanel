@@ -94,29 +94,25 @@ def move(session, node_id, new_parent_id, previous_node_id, next_node_id):
             log.debug('Moved Node %s has no previous sibling', node)
             previous_node = None
 
+        """
         try:
             next_node = Node.get_by_id(session, next_node_id)
         except Exception as e:
             log.debug('Moved Node %s has no next sibling', node)
             next_node = None
+        """
 
         # compute weight
-        if (not previous_node is None) and (not next_node is None):
+        if (not previous_node is None):
 
             if new_parent == old_parent and \
-               previous_node.weight + 1 == next_node.weight - 1 and \
                previous_node.weight + 1 == node.weight:
                 # The node was not moved
                 log.debug('The node was not moved')
                 return dict(success=True)
 
-            new_weight = next_node.weight
-
-        elif not previous_node is None:
             new_weight = previous_node.weight + 1
-        elif not next_node is None:
-            # new_weight = next_node.weight - 1
-            new_weight = next_node.weight
+
         else:
             new_weight = 1
 
