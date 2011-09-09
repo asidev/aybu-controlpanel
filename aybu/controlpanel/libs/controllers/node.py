@@ -4,6 +4,7 @@
 import logging
 
 from aybu.core.models import Node, Menu
+from aybu.core.utils.exceptions import ValidationError
 
 log = logging.getLogger(__name__)
 
@@ -79,7 +80,7 @@ def move(session, node_id, new_parent_id, previous_node_id, next_node_id):
         if isinstance(node, Menu):
             error_message = "Root nodes can not be moved"
             log.warn(error_message)
-            raise Exception(error_message)
+            raise ValidationError(error_message)
 
         log.debug("Node to move has id %d, "
                   "had parent with id %d and had weight %d",
@@ -106,6 +107,7 @@ def move(session, node_id, new_parent_id, previous_node_id, next_node_id):
                previous_node.weight + 1 == next_node.weight - 1 and \
                previous_node.weight + 1 == node.weight:
                 # The node was not moved
+                log.debug('The node was not moved')
                 return dict(success=True)
 
             new_weight = next_node.weight
@@ -126,7 +128,7 @@ def move(session, node_id, new_parent_id, previous_node_id, next_node_id):
         session.flush()
 
         # Reordering old brothers
-        brothers_q = session.query.filter(Node.parent == node.parent).\
+        brothers_q = session.query(Node).filter(Node.parent == node.parent).\
                                    filter(Node.id != node.id)
         heavy_bros = brothers_q.filter(Node.weight > old_weight)
         num_heavy_bros = heavy_bros.count()
@@ -143,7 +145,7 @@ def move(session, node_id, new_parent_id, previous_node_id, next_node_id):
         )
 
         # Reordering new brothers
-        brothers_q = session.query.filter(Node.parent == new_parent).\
+        brothers_q = session.query(Node).filter(Node.parent == new_parent).\
                                 filter(Node.id != node.id)
         heavy_bros = brothers_q.filter(Node.weight >= new_weight)
         num_heavy_bros = heavy_bros.count()
@@ -164,17 +166,15 @@ def move(session, node_id, new_parent_id, previous_node_id, next_node_id):
         node.parent = new_parent
         node.weight = new_weight
 
+        # TODO
         # Calculate new url and set them in NodeInfo
-        
+
         session.commit()
 
-    except IntegrityError as e:
-        session.rollback()
-        log.exception(e)
+    except ValidationError as e:
         raise e
 
     except Exception as e:
         session.rollback()
         log.exception("An error occured moving a node : %s", e)
         raise e
-
