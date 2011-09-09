@@ -217,6 +217,28 @@ class NodeControllersTests(BaseTests):
         with self.assertRaises(ValidationError):
             move(self.session, 7, 4, None)
 
+        # Testing all None as argument
+        with self.assertRaises(Exception):
+            move(self.session, None, None, None)
+
+        # Testing a node cannot be moved with no parent
+        with self.assertRaises(Exception):
+            move(self.session, 2, None, None)
+
+        # Testing a node cannot be moved as child of a node that does not exist
+        with self.assertRaises(Exception):
+            move(self.session, None, 54, None)
+
+        # Testing some other None combination
+        with self.assertRaises(Exception):
+            move(self.session, None, None, 2)
+
+        # Testing a node that not exists cannot be moved
+        # as child of a node that does not exist
+        with self.assertRaises(Exception):
+            move(self.session, 33, 54, None)
+
+
 
 
 
