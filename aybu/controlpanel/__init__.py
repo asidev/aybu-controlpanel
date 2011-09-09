@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import aybu.website
-from aybu.controlpanel.util import AuthenticationPolicy
-from aybu.controlpanel.util import Request
-from aybu.website.models.base import Base
+from aybu.core.utils.authentication import AuthenticationPolicy
+from aybu.core.utils.request import Request
+from aybu.controlpanel.models import Base
 from pyramid.config import Configurator
 from sqlalchemy import engine_from_config
 
@@ -92,5 +91,3 @@ def add_views(config):
     config.add_view(route_name='login-render',
                     renderer='/admin/login.mako',
                     view='aybu.controlpanel.views.login')
-
-    

@@ -5,8 +5,8 @@ from aybu.controlpanel.models import Menu
 from aybu.controlpanel.models import Node
 from aybu.controlpanel.models import Page
 from aybu.controlpanel.models import Section
-from aybu.controlpanel.libs.utils import get_object_from_python_path
-from aybu.controlpanel.libs.exceptions import ValidationError
+from aybu.core.utils import get_object_from_python_path
+from aybu.core.utils.exceptions import ValidationError
 import logging
 
 __all__ = []

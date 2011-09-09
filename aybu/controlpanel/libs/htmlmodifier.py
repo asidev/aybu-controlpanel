@@ -10,7 +10,7 @@ import logging
 
 from BeautifulSoup import BeautifulSoup
 
-from aybu.website.models import File, Image, NodeInfo
+from aybu.controlpanel.models import File, Image, NodeInfo
 
 log = logging.getLogger(__name__)
 

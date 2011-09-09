@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
-from aybu.controlpanel.libs.utils import get_object_from_python_path
+from aybu.core.utils import get_object_from_python_path
 
 
 log = logging.getLogger(__name__)
@@ -85,5 +85,42 @@ def search(context, request):
     """
     # Parsing the request
     # Call controller update.
+    # Prepare response
+    return None
+
+
+def move(context, request):
+    """
+        This views is called to move a node.
+    """
+    # Parsing the request
+    try:
+        moved_node_id = int(request.params.get('moved_node_id', None))
+        parent_id = int(request.params.get('new_parent_id', None))
+
+        try:
+            previous_node_id = int(request.params.get('previous_node_id',
+                                                      None))
+        except:
+            previous_node_id = None
+
+        try:
+            next_node_id = int(request.params.get('next_node_id', None))
+        except:
+            next_node_id = None
+
+        aybu.controlpanel.libs.controllers.node.move(request.db_session,
+                                                     moved_node_id,
+                                                     parent_id,
+                                                     previous_node_id,
+                                                     next_node_id)
+
+    except Exception as e:
+        log.exception("An error occured moving a menu entry : %s", e)
+        res = _(u"Si è verificato un errore nello spostamento della voce di menù richiesta")
+        #response.status = 500
+
+
+    # Call controller move.
     # Prepare response
     return None

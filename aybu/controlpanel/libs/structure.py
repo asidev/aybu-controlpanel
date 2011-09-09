@@ -11,9 +11,9 @@ from aybu.controlpanel.lib.exc import ConstraintException, QuotaException
 from aybu.controlpanel.lib.htmlmodifier import change_href
 
 from aybu.website.lib.common import urlify
-from aybu.website.models import Node, NodeInfo, Menu, Page, Section
-from aybu.website.models import InternalLink, ExternalLink, Setting
-from aybu.website.models import View, Language
+from aybu.controlpanel.models import Node, NodeInfo, Menu, Page, Section
+from aybu.controlpanel.models import InternalLink, ExternalLink, Setting
+from aybu.controlpanel.models import View, Language
 
 from sqlalchemy import desc, or_, func
 
