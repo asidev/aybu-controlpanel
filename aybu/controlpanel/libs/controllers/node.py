@@ -3,8 +3,9 @@
 
 import logging
 
-from aybu.core.models import Node, Menu
-from aybu.core.utils.exceptions import ValidationError
+from aybu.core.models import Node, Menu, Page
+from aybu.core.utils import get_object_from_python_path
+from aybu.core.utils.exceptions import ValidationError, ConstraintError
 
 log = logging.getLogger(__name__)
 
@@ -15,10 +16,8 @@ def create(session, cls, **params):
     try:
         validator = 'aybu.controlpanel.libs.validators.node.validate_create'
         validator = get_object_from_python_path(validator)
-
     except ValueError as e:
-        log.debug('A validator for %s does not exist!' % cls.__name__)
-
+        log.debug('A validator for %s does not exist!', cls.__name__, e)
     else:
         entity = cls(**validator(session, cls, **params))
         session.add(entity)
@@ -36,14 +35,87 @@ def update(session, type_, **kwargs):
     return None
 
 
-def delete(session, type_, **kwargs):
+# def delete(session, type_, **kwargs):
+def delete(session, node_id):
     """
         Delete a node.
     """
-    # Check node type.
-    # Validate params (based on node type).
-    # Call model function to get wanted data.
-    return None
+
+    try:
+        node = Node.get_by_id(session, node_id)
+        log.debug('Deleting %s', node)
+
+        if isinstance(node, Menu):
+            error_message = "You can't remove Menu from here"
+            log.warn(error_message)
+            raise ValidationError(error_message)
+
+        if isinstance(node, Page) and Page.is_last_page(session):
+            error_message = "Cannot remove last page"
+            log.warn(error_message)
+            raise ConstraintError(error_message)
+
+        old_weight = node.weight
+
+        # set the node weight to a very high value so that it is "out" of
+        # the tree
+        node.weight = 696969
+        session.flush()
+
+        brothers_q = session.query(Node).filter(Node.parent == node.parent).\
+                             filter(Node.id != node.id)
+
+        children_q = session.query(Node).filter(Node.parent == node)
+
+        num_children = children_q.count()
+        num_brothers = brothers_q.count()
+
+        log.debug("Num children %d", num_children)
+        log.debug("Num brothers %d", num_brothers)
+
+        log.debug("Making room for children nodes of the node to delete")
+        # Update weight for those "brothers" of the node we are about to delete
+        # in order to make room for its children to avoid duplicated weight
+        # entries for the same parent
+        brothers_q.filter(Node.weight > old_weight).update(
+            values={Node.weight: Node.weight + num_children + num_brothers}
+        )
+        session.flush()
+
+        log.debug("Moving old children")
+        # Relocate node children up one level, adjusting their weight so they
+        # take over to their father position
+
+        children_q.update(values={
+            Node.weight: old_weight + Node.weight - 1,
+            Node.parent_id: node.parent_id
+        })
+
+        log.debug("Compacting nodes")
+        # Move back node's brothers to compact node weights
+        brothers_q.filter(Node.weight > old_weight + num_children - 1).\
+                update(values={Node.weight: Node.weight - (num_brothers + 1)})
+
+        session.flush()
+
+        # TODO calculate and check new URLs
+
+        # Due to db cascading this code should not be needed
+        for translation in node.translations:
+            session.delete(translation)
+
+        log.debug("Deleting node")
+
+        session.delete(node)
+
+        session.commit()
+
+        # TODO FLUSH CACHE (at least varnish)
+
+    except Exception as e:
+        log.exception(e)
+        session.rollback()
+        raise e
 
 
 def index(session, type_, **kwargs):
@@ -156,6 +228,7 @@ def move(session, node_id, new_parent_id, previous_node_id):
 
         # TODO
         # Calculate new url and set them in NodeInfo
+        # URL conflict
 
         session.commit()
 
