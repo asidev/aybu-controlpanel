@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from aybu.controlpanel.models import Menu
-from aybu.controlpanel.models import Node
-from aybu.controlpanel.models import Page
-from aybu.controlpanel.models import Section
-from aybu.core.utils import get_object_from_python_path
-from aybu.core.utils.exceptions import ValidationError
 import logging
+
+from aybu.controlpanel.models import Node, Page, Section, View
+from aybu.core.utils import get_object_from_python_path
+from aybu.core.utils.modifiers import boolify
+from aybu.core.utils.exceptions import ValidationError, ConstraintError
 
 __all__ = []
 
@@ -23,7 +22,6 @@ def validate_create(session, cls, **params):
 
     try:
         validate_lineage(cls, Node)
-
     except ValueError as e:
         raise ValidationError('cls: ', *e.args)
 
@@ -45,16 +43,16 @@ def validate_node(session, **params):
     """Validate input values that can be used to create a Node instance.
 
     """
-    #FIXME: Is 'parent' mandatory?
-    if 'parent' in params:
-        if not isinstance(params['parent'], Node):
-            # Load Node 'parent' from database.
-            params['parent'] = Node.get_by_id(params['parent'])
+    try:
+        parent = params['parent']
 
-        #FIXME: This check is needed because the model is wrong!
-        if not isinstance(params['parent'], (Menu, Section, Page)):
-            msg = 'parent: %s cannot have children.' % params['parent'].__name__
-            raise ValidationError(msg)
+        if not parent is None and not isinstance(parent, Node):
+            # Trying to load Node 'parent' from database.
+            params['parent'] = Node.get_by_id(int(params['parent']))
+    except:
+        raise ValidationError('Invalid parent')
+
+    # The type of parent is validated in the model
 
     if params.get('weight') is None:
         weight = Node.get_max_weight(session, params.get('parent'))
@@ -66,14 +64,46 @@ def validate_node(session, **params):
 def validate_page(session, **params):
 
     params.update(validate_node(session, **params))
-    """
-    if not isinstance(params.get('view'), View):
-        msg = 'view: %s is not a View instance.' % params.get('view')
-        raise ValidationError(msg)
 
-    if not new_page_allowed(session):
-        log.error('Max number of pages has been reached')
-        raise QuotaException(error)
-    """
+    try:
+        view = params.get('view')
+        if not isinstance(view, View):
+            params['view'] = View.get_by_id(int(view))
+    except:
+        raise ValidationError('Invalid view')
+
+    if not Page.new_page_allowed(session):
+        msg = 'Max number of pages has been reached'
+        log.error(msg)
+        raise ConstraintError(msg)
+
+    try:
+        params['home'] = boolify(params.get('home'))
+    except:
+        raise ValidationError()
 
     return params
+
+
+def validate_section(session, **params):
+    params.update(validate_node(session, **params))
+    return params
+
+
+def validate_externallink(session, **params):
+    params.update(validate_node(session, **params))
+    return params
+
+
+def validate_internallink(session, **params):
+    params.update(validate_node(session, **params))
+
+    try:
+        linked_to = params.get('linked_to')
+        if not isinstance(linked_to, Page):
+            params['linked_to'] = Page.get_by_id(int(linked_to))
+    except:
+        raise ValidationError('Invalid Internal Link')
+
+    return params
+

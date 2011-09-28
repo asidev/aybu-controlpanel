@@ -104,16 +104,10 @@ def move(context, request):
         except:
             previous_node_id = None
 
-        try:
-            next_node_id = int(request.params.get('next_node_id', None))
-        except:
-            next_node_id = None
-
         aybu.controlpanel.libs.controllers.node.move(request.db_session,
                                                      moved_node_id,
                                                      parent_id,
-                                                     previous_node_id,
-                                                     next_node_id)
+                                                     previous_node_id)
 
     except Exception as e:
         log.exception("An error occured moving a menu entry : %s", e)
