@@ -3,7 +3,7 @@
 
 import logging
 
-from aybu.core.models import Node, Menu, Page
+from aybu.core.models import Node, Menu, Page, Setting
 from aybu.core.utils import get_object_from_python_path
 from aybu.core.utils.exceptions import ValidationError, ConstraintError
 
@@ -118,15 +118,142 @@ def delete(session, node_id):
         raise e
 
 
-def index(session, type_, **kwargs):
+def _sanitize_menu(session):
+    max_menus_setting = session.query(Setting).\
+                        filter(Setting.name==u'max_menus').one()
+    try:
+        max_menus = int(max_menus_setting.value)
+    except:
+        session.query(Setting).update(dict(value=1))
+        max_menus = 1
+
+    if max_menus < 1:
+        session.query(Setting).update(dict(value=1))
+        max_menus = 1
+
+    log.debug('Total number of menus required by template is %d', max_menus)
+
+    menus = session.query(Menu).order_by(Menu.weight).all()
+    num_menus = len(menus)
+
+    if num_menus > max_menus:
+        log.debug('Some menus have to be removed. '
+                  'Their children will be reallocated as hidden pages.')
+
+        for i in xrange(max_menus, num_menus):
+            log.debug('Removing menu number %d' % (menus[i].weight))
+
+            while len(menus[i].children) > 0:
+                # A bulk updated is more efficient but move is NEEDED because
+                # this function make all needed controls
+                log.debug('Moving child with id %d in menu number %d',
+                          menus[i].children[0].id, menus[max_menus-1].weight)
+                move(session, menus[i].children[0].id, menus[max_menus-1].id)
+
+            session.delete(menus[i])
+            menus.pop(i)
+
+    elif num_menus < max_menus:
+
+        for i in xrange(num_menus, max_menus):
+            log.debug('Creating missing menu number %d' % (i+1))
+            menu = Menu(parent=None, weight = i + 1)
+            session.add(menu)
+            menus.insert(i, menu)
+
+    return menus
+
+"""
+def _create_tree(session, lang, root=None, recurse=False):
+
+    if root == None:
+        menus = _sanitize_menu(session)
+
+        for i in xrange(1, total_menus+1):
+            try:
+                root = menus[i]
+            except:
+                Menu(weight=i)
+                dbsession.commit()
+                menus.clear(recurse=False)
+                root = menus[i]
+
+            log.debug(root)
+            children = root.children
+
+            root_elem = {}
+            root_elem['id'] = root.id
+            root_elem['url'] = '%s' % (lang.lang)
+
+            root_elem['button_label'] = _(u'Menu %d' % (i))
+
+            root_elem['title'] = '---'
+            root_elem['iconCls'] = 'folder'
+            root_elem['type'] = 'Menu'
+            root_elem['enabled'] = root.enabled
+            root_elem['checked'] = False
+            root_elem['children'] = []
+            root_elem['expanded'] = True if len(children) > 0 else False
+
+            tree.append(root_elem)
+
+            for child in children:
+                log.debug('Child : %s', child)
+                root_elem['children'].append(self._create_tree(lang,
+                                                               root=child))
+
+    else:
+        tree = {}
+        link = self._get_item_info(root, lang)
+        tree.update(link)
+        tree['children'] = []
+
+        for child in root.children:
+            tree['children'].append(self._create_tree(lang, root=child))
+
+    return tree
+
+
+def _get_item_info(self, node, lang):
+    link = {}
+    link['id'] = node.id
+    link['url'] = node[lang].url_part or node.url
+    link['button_label'] = node[lang].label
+    link['title'] = node[lang].title or "---"
+    link['type'] = node.type
+    link['iconCls'] = link['type']
+    link['enabled'] = node.enabled
+    link['checked'] = False
+    link['allowChildren'] = True
+
+    if node.type in ('ExternalLink', 'InternalLink'):
+        link['leaf'] = True
+        link['allowChildren'] = False
+
+    if node.type in ('InternalLink'):
+        link['url'] = node.linked_to[lang].url_part
+
+    link['expanded'] = False
+
+    if node.children:
+        link['leaf'] = False
+        link['expanded'] = True
+
+    return link
+"""
+
+
+def index(session, lang, root=None):
     """
         Retrieve and return data to display menus trees.
         HINT: load __FIRST__ level of each menu.
     """
-    # Check node type.
-    # Validate params (based on node type).
-    # Call model function to get wanted data.
-    return None
+
+    """
+    tree = self._create_tree(lang)
+    return tree
+    """
+    pass
 
 
 def search(session, type_, **kwargs):
@@ -139,7 +266,7 @@ def search(session, type_, **kwargs):
     return None
 
 
-def move(session, node_id, new_parent_id, previous_node_id):
+def move(session, node_id, new_parent_id, previous_node_id=None):
     """
         Move a node
     """
@@ -163,7 +290,7 @@ def move(session, node_id, new_parent_id, previous_node_id):
         try:
             previous_node = Node.get_by_id(session, previous_node_id)
         except Exception as e:
-            log.debug('Moved Node %s has no previous sibling', node)
+            log.debug('Node is moving %s has no previous sibling', node)
             previous_node = None
 
         # compute weight

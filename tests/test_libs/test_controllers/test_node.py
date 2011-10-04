@@ -8,7 +8,9 @@ from aybu.core.utils.exceptions import ValidationError, ConstraintError
 from . test_base import BaseTests
 
 from aybu.controlpanel.libs.controllers.node import move, delete
+from aybu.controlpanel.libs.controllers.node import _sanitize_menu
 from aybu.controlpanel.models import Menu, Page, Section, ExternalLink
+from aybu.controlpanel.models import Setting, SettingType
 from aybu.controlpanel.models import InternalLink, Language
 
 log = logging.getLogger(__name__)
@@ -29,6 +31,55 @@ class NodeControllersTests(BaseTests):
     def test_search(self):
         raise NotImplementedError()
     """
+
+    def test_sanitize_menu(self):
+
+        menu_1 = Menu(id=1, parent=None, weight=1)
+        self.session.add(menu_1)
+
+        max_menus = Setting(name=u'max_menus',
+                            value=u'-1',
+                            ui_administrable=False,
+                            type=SettingType(name=u'integer', raw_type=u'int'))
+        self.session.add(max_menus)
+
+        # Testing negative value for max_menus
+        menus = _sanitize_menu(self.session)
+        self.assertIn(menu_1, menus)
+
+        # Testing not integer value for max_menus
+        self.session.query(Setting).update(dict(value='test'))
+        menus = _sanitize_menu(self.session)
+        self.assertIn(menu_1, menus)
+
+        # Creating second menu with children and testing if sanitize
+        # correctly move the children from second menu to first one
+        menu_2 = Menu(id=2, parent=None, weight=2)
+        self.session.add(menu_2)
+
+        page_1 = Page(id=3, parent=menu_2, weight=1)
+        self.session.add(page_1)
+
+        page_2 = Page(id=4, parent=menu_2, weight=2)
+        self.session.add(page_2)
+
+        menus = _sanitize_menu(self.session)
+        self.assertIn(menu_1, menus)
+        self.assertNotIn(menu_2, menus)
+        menu_1_children = menu_1.children
+        self.assertIn(page_1, menu_1_children)
+        self.assertIn(page_2, menu_1_children)
+
+        # Creating second menu with children and testing if sanitize
+        # correctly move the children from second menu to first one
+        self.session.query(Setting).update(dict(value=3))
+        menus = _sanitize_menu(self.session)
+        menu_2 = self.session.query(Menu).filter(Menu.weight==2).one()
+        menu_3 = self.session.query(Menu).filter(Menu.weight==3).one()
+        self.assertIn(menu_1, menus)
+        self.assertIn(menu_2, menus)
+        self.assertIn(menu_3, menus)
+
 
     def test_delete(self):
         it = Language(lang=u'it', country=u'it')
