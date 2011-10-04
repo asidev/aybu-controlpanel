@@ -101,10 +101,6 @@ class NodeControllersTests(BaseTests):
 
         self.session.commit()
 
-        # Checking the homepage is page(2)
-        with self.assertRaises(NoResultFound):
-            Page.get_homepage(self.session)
-        self.assertEqual(page, Page.set_default_homepage(self.session))
         self.assertEqual(page, Page.get_homepage(self.session))
 
         # Trying to delete page(2)
@@ -137,9 +133,6 @@ class NodeControllersTests(BaseTests):
         self.assertEqual(4, external_link.weight)
         self.assertEqual(5, internal_link.weight)
         # Checking the homepage is now child_page(6)
-        with self.assertRaises(NoResultFound):
-            Page.get_homepage(self.session)
-        self.assertEqual(child_page, Page.set_default_homepage(self.session))
         self.assertEqual(child_page, Page.get_homepage(self.session))
 
         # Trying to delete section(3)
@@ -185,9 +178,6 @@ class NodeControllersTests(BaseTests):
         self.assertEqual(2, external_link.weight)
         self.assertEqual(3, internal_link.weight)
         # Checking the homepage is now another_page(9)
-        with self.assertRaises(NoResultFound):
-            Page.get_homepage(self.session)
-        self.assertEqual(another_page, Page.set_default_homepage(self.session))
         self.assertEqual(another_page, Page.get_homepage(self.session))
 
         # Trying to delete internal_link(5)

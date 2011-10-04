@@ -98,7 +98,7 @@ def delete(session, node_id):
 
         session.flush()
 
-        # TODO calculate and check new URLs
+        # TODO calculate and check new URLs of children
 
         # Due to db cascading this code should not be needed
         for translation in node.translations:
