@@ -22,8 +22,8 @@ keywords = ''
 
 include_package_data = True
 zip_safe = False
-requires = ['aybu-core', 'pyramid<1.2a', 'SQLAlchemy<0.8a', 'Babel',
-            'aybu-website', "PyEnchant>=1.6.3", "BeautifulSoup==3.2.0"]
+requires = ['aybu-core', 'pyramid<1.3a', 'SQLAlchemy<0.8a', 'Babel',
+            'aybu-website', "PyEnchant>=1.6.3", "BeautifulSoup"]
 test_suite = 'tests'
 
 entry_points = """\

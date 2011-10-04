@@ -1,18 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from pyramid import testing
 import logging
-import unittest
-
 from sqlalchemy.orm.exc import NoResultFound
 
 from aybu.core.utils.exceptions import ValidationError, ConstraintError
-from aybu.core.tests.test_models.test_base import BaseTests
+from . test_base import BaseTests
 
 from aybu.controlpanel.libs.controllers.node import move, delete
-from aybu.controlpanel.models import Node, Menu, Page, Section, ExternalLink
-from aybu.controlpanel.models import InternalLink, NodeInfo, Language
+from aybu.controlpanel.models import Menu, Page, Section, ExternalLink
+from aybu.controlpanel.models import InternalLink, Language
 
 log = logging.getLogger(__name__)
 

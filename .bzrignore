@@ -1,3 +1,5 @@
 aybu_controlpanel.egg-info
 development.ini
 .coverage
+./dist
+./tests.ini
