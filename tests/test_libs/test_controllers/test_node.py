@@ -1,17 +1,24 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import ConfigParser
 import logging
-from sqlalchemy.orm.exc import NoResultFound
+import StringIO
 
 from aybu.core.utils.exceptions import ValidationError, ConstraintError
 from . test_base import BaseTests
 
 from aybu.controlpanel.libs.controllers.node import move, delete
 from aybu.controlpanel.libs.controllers.node import _sanitize_menu
-from aybu.controlpanel.models import Menu, Page, Section, ExternalLink
-from aybu.controlpanel.models import Setting, SettingType
-from aybu.controlpanel.models import InternalLink, Language
+from aybu.controlpanel.libs.controllers.node import _create_structure
+from aybu.controlpanel.libs.controllers.node import _get_item_info
+from aybu.core.models import Menu, Page, Section, ExternalLink
+from aybu.core.models import Setting, SettingType, PageInfo, MenuInfo
+from aybu.core.models import InternalLink, Language
+from aybu.core.models import default_data_from_config
+from aybu.core.models import populate
+
+from sqlalchemy.sql import func
 
 log = logging.getLogger(__name__)
 
@@ -74,16 +81,144 @@ class NodeControllersTests(BaseTests):
         # correctly move the children from second menu to first one
         self.session.query(Setting).update(dict(value=3))
         menus = _sanitize_menu(self.session)
-        menu_2 = self.session.query(Menu).filter(Menu.weight==2).one()
-        menu_3 = self.session.query(Menu).filter(Menu.weight==3).one()
+        menu_2 = self.session.query(Menu).filter(Menu.weight == 2).one()
+        menu_3 = self.session.query(Menu).filter(Menu.weight == 3).one()
         self.assertIn(menu_1, menus)
         self.assertIn(menu_2, menus)
         self.assertIn(menu_3, menus)
 
+    def test_create_structure(self):
+        max_menus = Setting(name=u'max_menus',
+                            value=u'1',
+                            ui_administrable=False,
+                            type=SettingType(name=u'integer', raw_type=u'int'))
+        self.session.add(max_menus)
+        it = Language(lang=u'it', country=u'it')
+        self.session.add(it)
+        en = Language(lang=u'en', country=u'gb')
+        self.session.add(en)
+        menu_1 = Menu(id=1, parent=None, weight=1)
+        self.session.add(menu_1)
+        menu_info_1 = MenuInfo(label=u'Menu Principale', node=menu_1, lang=it)
+        self.session.add(menu_info_1)
+
+        expected_dict = dict(id=1, url=u'it', button_label=u'Menu Principale',
+                             title='---', iconCls='folder', type='Menu',
+                             enabled=True, hidden=False, checked=False,
+                             children=[], expanded=False, home=False,
+                             leaf=True, allowChildren=True)
+        menu_dict = _create_structure(self.session, it)
+        self.assertDictEqual(expected_dict, menu_dict[0])
+
+    def test_get_item_info(self):
+        file_ = StringIO.StringIO(
+"""
+[app:aybu-website]
+default_data = data/default_data.json
+""")
+        config = ConfigParser.ConfigParser()
+        config.readfp(file_)
+        data = default_data_from_config(config)
+
+        populate(self.config, data)
+
+        it = self.session.query(Language).filter(Language.lang == u'it').one()
+
+        home = Page.get_homepage(self.session)
+        home_info = PageInfo.get_homepage(self.session, it)
+
+        expected_dict = dict(id=home.id, url=home_info.url_part,
+                             home=home.home, button_label=home_info.label,
+                             title=home_info.title, type=home.type,
+                             iconCls=home.type, enabled=home.enabled,
+                             hidden=home.hidden, checked=False,
+                             allowChildren=True, expanded=False, leaf=True,
+                             children=[])
+
+        home_dict = _get_item_info(self.session, home, it)
+        self.assertDictEqual(expected_dict, home_dict)
+
+        section = self.session.query(Section).order_by(func.random()).first()
+        section_info = section.get_translation(self.session, it)
+        expected_dict = dict(id=section.id, url=section_info.url_part,
+                             home=False, button_label=section_info.label,
+                             title=section_info.title, type=section.type,
+                             iconCls=section.type, enabled=section.enabled,
+                             hidden=section.hidden, checked=False,
+                             allowChildren=True, expanded=False, leaf=True,
+                             children=[])
+        if section.children:
+            expected_dict['leaf'] = False
+            expected_dict['expanded'] = True
+        section_dict = _get_item_info(self.session, section, it)
+        self.assertDictEqual(expected_dict, section_dict)
+
+        external_link = self.session.query(ExternalLink).\
+                             order_by(func.random()).first()
+        external_link_info = external_link.get_translation(self.session, it)
+        expected_dict = dict(id=external_link.id,
+                             url=external_link_info.ext_url,
+                             home=False, button_label=external_link_info.label,
+                             title='---', children=[],
+                             type=external_link.type,
+                             iconCls=external_link.type,
+                             enabled=external_link.enabled,
+                             hidden=external_link.hidden, checked=False,
+                             allowChildren=False, expanded=False, leaf=True)
+        external_link_dict = _get_item_info(self.session, external_link, it)
+        self.assertDictEqual(expected_dict, external_link_dict)
+
+        internal_link = self.session.query(InternalLink).\
+                             order_by(func.random()).first()
+        internal_link_info = internal_link.get_translation(self.session, it)
+        internal_link_url = internal_link.linked_to.\
+                                          get_translation(self.session, it).url
+        expected_dict = dict(id=internal_link.id, url=internal_link_url,
+                             home=False, button_label=internal_link_info.label,
+                             title='---', children=[],
+                             type=internal_link.type,
+                             iconCls=internal_link.type,
+                             enabled=internal_link.enabled,
+                             hidden=internal_link.hidden, checked=False,
+                             allowChildren=False, expanded=False, leaf=True)
+        internal_link_dict = _get_item_info(self.session, internal_link, it)
+        self.assertDictEqual(expected_dict, internal_link_dict)
+
+        menu_2 = Menu(parent=None, weight=2)
+        self.session.add(menu_2)
+        menu_info_2 = MenuInfo(label=u'Menu 2', node=menu_2, lang=it)
+        self.session.add(menu_info_2)
+
+        page_1 = Page(parent=menu_2, weight=1)
+        self.session.add(page_1)
+        page_info_1 = PageInfo(label='Test', title='Pagina Test',
+                               url_part='pagina_test',
+                               url='/it/pagina_test.html', node=page_1,
+                               lang=it)
+        self.session.add(page_info_1)
+        self.session.flush()
+
+        menu_dict = dict(id=menu_2.id, url=u'it', button_label=u'Menu 2',
+                         title='---', iconCls='folder', type='Menu',
+                         enabled=True, hidden=False, checked=False,
+                         children=[], expanded=True, home=False,
+                         leaf=False, allowChildren=True)
+
+        page_dict = dict(id=page_1.id, url=page_info_1.url_part,
+                         home=page_1.home, button_label=page_info_1.label,
+                         title=page_info_1.title, type=page_1.type,
+                         iconCls=page_1.type, enabled=page_1.enabled,
+                         hidden=page_1.hidden, checked=False,
+                         allowChildren=True, expanded=False, leaf=True,
+                         children=[])
+        menu_dict['children'].append(page_dict)
+        result_dict = _get_item_info(self.session, menu_2, it, recurse=True)
+        self.assertDictEqual(menu_dict, result_dict)
+
 
     def test_delete(self):
-        it = Language(lang=u'it', country=u'it')
-        en = Language(lang=u'en', country=u'gb')
+        #it = Language(lang=u'it', country=u'it')
+        #en = Language(lang=u'en', country=u'gb')
 
         menu = Menu(id=1, parent=None, weight=1)
 
@@ -98,9 +233,11 @@ class NodeControllersTests(BaseTests):
         section = Section(id=3, parent=menu, weight=2)
         """
         section_it = NodeInfo(label=u'Azienda', title=u'Azienda',
-                              url_part=u'azienda', url=u'', node=section, lang=it)
+                              url_part=u'azienda', url=u'', node=section,
+                              lang=it)
         section_en = NodeInfo(label=u'Company', title=u'Company',
-                              url_part=u'company', url=u'', node=section, lang=en)
+                              url_part=u'company', url=u'', node=section,
+                              lang=en)
         """
 
         external_link = ExternalLink(id=4, parent=menu, weight=3)
@@ -261,8 +398,8 @@ class NodeControllersTests(BaseTests):
             delete(self.session, 9)
 
     def test_move(self):
-        it = Language(lang=u'it', country=u'it')
-        en = Language(lang=u'en', country=u'gb')
+        #it = Language(lang=u'it', country=u'it')
+        #en = Language(lang=u'en', country=u'gb')
 
         menu = Menu(id=1, parent=None, weight=1)
 
@@ -277,9 +414,11 @@ class NodeControllersTests(BaseTests):
         section = Section(id=3, parent=menu, weight=2)
         """
         section_it = NodeInfo(label=u'Azienda', title=u'Azienda',
-                              url_part=u'azienda', url=u'', node=section, lang=it)
+                              url_part=u'azienda', url=u'', node=section,
+                              lang=it)
         section_en = NodeInfo(label=u'Company', title=u'Company',
-                              url_part=u'company', url=u'', node=section, lang=en)
+                              url_part=u'company', url=u'', node=section,
+                              lang=en)
         """
 
         external_link = ExternalLink(id=4, parent=menu, weight=3)
@@ -377,7 +516,6 @@ class NodeControllersTests(BaseTests):
         self.assertEqual(2, child_section.weight)
         self.assertEqual(2, another_section.weight)
 
-
         # Moving external_link(4) as last child of page(2).
         move(self.session, 4, 2, 7)
         # After this the structure is newly
@@ -399,7 +537,6 @@ class NodeControllersTests(BaseTests):
         self.assertEqual(3, external_link.weight)
         self.assertEqual(3, internal_link.weight)
 
-
         # Testing move without really change the position to the node.
         # This should debug the control when the nove is not really moved
         # Moving child_section(7) without really move it
@@ -412,7 +549,6 @@ class NodeControllersTests(BaseTests):
         self.assertEqual(1, child_page.weight)
         self.assertEqual(2, child_section.weight)
         self.assertEqual(3, external_link.weight)
-
 
         # Moving child_section(7) as only child of section(3)
         # This test again move with no previous_node_id

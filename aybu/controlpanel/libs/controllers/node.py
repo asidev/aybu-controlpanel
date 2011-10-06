@@ -95,17 +95,15 @@ def delete(session, node_id):
         # Move back node's brothers to compact node weights
         brothers_q.filter(Node.weight > old_weight + num_children - 1).\
                 update(values={Node.weight: Node.weight - (num_brothers + 1)})
-
         session.flush()
 
         # TODO calculate and check new URLs of children
 
         # Due to db cascading this code should not be needed
-        for translation in node.translations:
-            session.delete(translation)
+        #for translation in node.translations:
+        #    session.delete(translation)
 
         log.debug("Deleting node")
-
         session.delete(node)
 
         session.commit()
@@ -152,9 +150,7 @@ def _sanitize_menu(session):
 
             session.delete(menus[i])
             menus.pop(i)
-
     elif num_menus < max_menus:
-
         for i in xrange(num_menus, max_menus):
             log.debug('Creating missing menu number %d' % (i+1))
             menu = Menu(parent=None, weight = i + 1)
@@ -163,85 +159,67 @@ def _sanitize_menu(session):
 
     return menus
 
-"""
-def _create_tree(session, lang, root=None, recurse=False):
 
-    if root == None:
-        menus = _sanitize_menu(session)
+def _create_structure(session, lang, recurse=False):
+    structure = []
 
-        for i in xrange(1, total_menus+1):
-            try:
-                root = menus[i]
-            except:
-                Menu(weight=i)
-                dbsession.commit()
-                menus.clear(recurse=False)
-                root = menus[i]
+    menus = _sanitize_menu(session)
+    for menu in menus:
+        elem = _get_item_info(session, menu, lang, recurse)
+        structure.append(elem)
 
-            log.debug(root)
-            children = root.children
-
-            root_elem = {}
-            root_elem['id'] = root.id
-            root_elem['url'] = '%s' % (lang.lang)
-
-            root_elem['button_label'] = _(u'Menu %d' % (i))
-
-            root_elem['title'] = '---'
-            root_elem['iconCls'] = 'folder'
-            root_elem['type'] = 'Menu'
-            root_elem['enabled'] = root.enabled
-            root_elem['checked'] = False
-            root_elem['children'] = []
-            root_elem['expanded'] = True if len(children) > 0 else False
-
-            tree.append(root_elem)
-
-            for child in children:
-                log.debug('Child : %s', child)
-                root_elem['children'].append(self._create_tree(lang,
-                                                               root=child))
-
-    else:
-        tree = {}
-        link = self._get_item_info(root, lang)
-        tree.update(link)
-        tree['children'] = []
-
-        for child in root.children:
-            tree['children'].append(self._create_tree(lang, root=child))
-
-    return tree
+    return structure
 
 
-def _get_item_info(self, node, lang):
-    link = {}
-    link['id'] = node.id
-    link['url'] = node[lang].url_part or node.url
-    link['button_label'] = node[lang].label
-    link['title'] = node[lang].title or "---"
-    link['type'] = node.type
-    link['iconCls'] = link['type']
-    link['enabled'] = node.enabled
-    link['checked'] = False
-    link['allowChildren'] = True
+def _get_item_info(session, node, lang, recurse=False):
+
+    node_info = node.get_translation(session, lang)
+
+    elem = {}
+    elem['id'] = node.id
+    elem['home'] = False
+    elem['button_label'] = node_info.label
+    elem['type'] = node.type
+    elem['iconCls'] = node.type
+    elem['enabled'] = node.enabled
+    elem['hidden'] = node.hidden
+    elem['checked'] = False
+    elem['allowChildren'] = True
+    elem['leaf'] = True
+    elem['expanded'] = False
+    elem['children'] = []
+
+    if node.type in ('Menu'):
+        elem['iconCls'] = 'folder'
+        elem['title'] = '---'
+        elem['url'] = lang.lang
+
+    if node.type in ('Page', 'Section'):
+        elem['title'] = node_info.title
+        elem['url'] = node_info.url_part
+
+    if node.type in ('Page'):
+        elem['home'] = node.home
 
     if node.type in ('ExternalLink', 'InternalLink'):
-        link['leaf'] = True
-        link['allowChildren'] = False
+        elem['title'] = "---"
+        elem['allowChildren'] = False
+
+    if node.type in ('ExternalLink'):
+        elem['url'] = node_info.ext_url
 
     if node.type in ('InternalLink'):
-        link['url'] = node.linked_to[lang].url_part
-
-    link['expanded'] = False
+        elem['url'] = node.linked_to.get_translation(session, lang).url
 
     if node.children:
-        link['leaf'] = False
-        link['expanded'] = True
+        elem['leaf'] = False
+        elem['expanded'] = True
+        if recurse:
+            for child in node.children:
+                elem['children'].append(_get_item_info(session, child, lang,
+                                                       recurse))
 
-    return link
-"""
-
+    return elem
 
 def index(session, lang, root=None):
     """
