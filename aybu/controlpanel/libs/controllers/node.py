@@ -19,38 +19,11 @@ limitations under the License.
 import logging
 
 from aybu.core.models import Node, Menu, Page, Setting
-from aybu.core.utils import get_object_from_python_path
 from aybu.core.utils.exceptions import ValidationError, ConstraintError
 
 log = logging.getLogger(__name__)
 
 
-def create(session, cls, **params):
-    """ Create a persistent 'cls' object and return it."""
-
-    try:
-        validator = 'aybu.controlpanel.libs.validators.node.validate_create'
-        validator = get_object_from_python_path(validator)
-    except ValueError as e:
-        log.debug('A validator for %s does not exist!', cls.__name__, e)
-    else:
-        entity = cls(**validator(session, cls, **params))
-        session.add(entity)
-
-    return entity
-
-
-def update(session, type_, **kwargs):
-    """
-        Update and return a node.
-    """
-    # Check node type.
-    # Validate params (based on node type).
-    # Call model function to get wanted data.
-    return None
-
-
-# def delete(session, type_, **kwargs):
 def delete(session, node_id):
     """
         Delete a node.
@@ -235,28 +208,6 @@ def _get_item_info(session, node, lang, recurse=False):
                                                        recurse))
 
     return elem
-
-def index(session, lang, root=None):
-    """
-        Retrieve and return data to display menus trees.
-        HINT: load __FIRST__ level of each menu.
-    """
-
-    """
-    tree = self._create_tree(lang)
-    return tree
-    """
-    pass
-
-
-def search(session, type_, **kwargs):
-    """
-        Perform a search in node collection and return results.
-    """
-    # Check node type.
-    # Validate params (based on node type).
-    # Call model function to get wanted data.
-    return None
 
 
 def move(session, node_id, new_parent_id, previous_node_id=None):
