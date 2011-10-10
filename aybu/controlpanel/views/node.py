@@ -48,7 +48,7 @@ def create(context, request):
     # you cannot send variables to the controller that are not needed.
 
     try:
-        Entity = get_object_from_python_path('aybu.controlpanel.models.%s'
+        Entity = get_object_from_python_path('aybu.core.models.%s'
                                              % (type_))
     except ValueError as e:
         msg = 'type_: entity %s does not exist!' % type_

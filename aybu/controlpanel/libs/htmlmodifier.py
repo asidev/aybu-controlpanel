@@ -21,7 +21,7 @@ import logging
 
 from BeautifulSoup import BeautifulSoup
 
-from aybu.controlpanel.models import File, Image, NodeInfo
+from aybu.core.models import File, Image, NodeInfo
 
 log = logging.getLogger(__name__)
 

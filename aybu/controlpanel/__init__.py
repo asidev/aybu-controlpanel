@@ -18,7 +18,7 @@ limitations under the License.
 
 from aybu.core.utils.authentication import AuthenticationPolicy
 from aybu.core.utils.request import Request
-from aybu.controlpanel.models import Base
+from aybu.core.models import Base
 from pyramid.config import Configurator
 from sqlalchemy import engine_from_config
 

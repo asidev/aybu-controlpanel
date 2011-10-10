@@ -18,7 +18,7 @@ limitations under the License.
 
 import logging
 
-from aybu.controlpanel.models import Node, Page, Section, View
+from aybu.core.models import Node, Page, Section, View
 from aybu.core.utils import get_object_from_python_path
 from aybu.core.utils.modifiers import boolify
 from aybu.core.utils.exceptions import ValidationError, ConstraintError
