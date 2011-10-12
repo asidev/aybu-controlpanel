@@ -27,7 +27,7 @@ import pyramid.security
 
 
 log = logging.getLogger(__name__)
-
+__version__ = (0, 1, 0, 'dev', 0)
 
 def main(global_config, **settings):
 

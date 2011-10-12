@@ -3,3 +3,5 @@ syntax: glob
 *.pyc
 ./*.ini
 ./.coverage
+./dist
+./aybu_controlpanel.egg-info
