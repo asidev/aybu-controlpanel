@@ -19,6 +19,7 @@ limitations under the License.
 from aybu.core.utils.authentication import AuthenticationPolicy
 from aybu.core.utils.request import Request
 from aybu.core.models import Base
+import aybu.website
 from pyramid.config import Configurator
 from sqlalchemy import engine_from_config
 
@@ -42,21 +43,18 @@ def main(global_config, **settings):
                           request_factory=Request,
                           authentication_policy=AuthenticationPolicy(settings))
 
-    # Initialize Babel translation dirs.
-    config.add_translation_dirs('aybu.website:locale')
-    config.add_translation_dirs('aybu.controlpanel:locale')
+    # configure website
+    config.include(aybu.website.includeme)
 
-    #config.scan('aybu.website')
-
-    config.include(aybu.website.add_subscribers)
-    config.include(aybu.website.add_assets)
-
-    config.include(aybu.website.add_routes)
-    config.include(add_routes)
-    config.include(aybu.website.add_views)
-    config.include(add_views)
-
+    # configure controlpanel
+    config.include(includeme)
     return config.make_wsgi_app()
+
+
+def includeme(config):
+    config.add_translation_dirs('aybu.controlpanel:locale')
+    config.include(add_routes)
+    config.include(add_views)
 
 
 def add_routes(config):
@@ -69,7 +67,6 @@ def add_routes(config):
     config.add_route('spellchecker', '/admin/spellchecker')
 
     config.add_route('banner_logo', '/admin/banner_logo.html')
-
 
     """
     # Admin urls.
@@ -92,17 +89,18 @@ def add_routes(config):
     """
     config.add_route('admin',
                      '/admin',
-                     factory='aybu.controlpanel.resources.Authenticated')
+                     factory='aybu.core.utils.authentication.Authenticated')
 
 
 def add_views(config):
 
-    config.add_view(route_name='admin',
-                    renderer='string',
-                    view='aybu.controlpanel.views.homepage',
-                    permission=pyramid.security.ALL_PERMISSIONS)
+#    config.add_view(route_name='admin',
+#                    renderer='string',
+#                    view='aybu.controlpanel.views.homepage',
+#                    permission=pyramid.security.ALL_PERMISSIONS)
 
 
-    config.add_view(route_name='login-render',
-                    renderer='/admin/login.mako',
-                    view='aybu.controlpanel.views.login')
+#    config.add_view(route_name='login-render',
+#                    renderer='/admin/login.mako',
+#                    view='aybu.controlpanel.views.login')
+    pass
