@@ -22,9 +22,7 @@ from aybu.core.models import Base
 import aybu.website
 from pyramid.config import Configurator
 from sqlalchemy import engine_from_config
-
 import logging
-import pyramid.security
 
 
 log = logging.getLogger(__name__)
@@ -43,41 +41,45 @@ def main(global_config, **settings):
                           request_factory=Request,
                           authentication_policy=AuthenticationPolicy(settings))
 
+    config.include(includeme)
+
     # configure website
     config.include(aybu.website.includeme)
 
     # configure controlpanel
-    config.include(includeme)
     return config.make_wsgi_app()
 
 
 def includeme(config):
     config.add_translation_dirs('aybu.controlpanel:locale')
-    config.include(add_routes)
-    config.include(add_views)
+    config.include('pyramid_handlers')
+    config.include(add_handlers)
 
 
-def add_routes(config):
+def add_handlers(config):
+    """ Old mappings:
+    map.connect("login-render", "/admin/login.html", controller="login",
+                action="show")
+    map.connect("login-submit", "/admin/login_submit.html", controller="login",
+                action="login")
+    map.connect("logout", "/admin/logout.html", controller="login",
+                action="logout")
 
-    config.add_route('login-render', '/admin/login.html')
-    config.add_route('login-submit', '/admin/login_submit.html')
-    config.add_route('logout', '/admin/logout.html')
-
-    config.add_route('edit', '/admin/edit')
-    config.add_route('spellchecker', '/admin/spellchecker')
-
-    config.add_route('banner_logo', '/admin/banner_logo.html')
-
-    """
-    # Admin urls.
-
+    map.connect("edit", "/admin/edit", controller="page",
+                action="edit_content")
+    map.connect("spellchecker", "/admin/spellchecker.html",
+                controller="spellchecker", action="rpc")
 
     map.connect("images", "/admin/images/{action}.html", controller="image")
     map.connect("files", "/admin/files/{action}.html", controller="files")
+
     map.connect("language", "/admin/language/{action}", controller="language")
+
     map.connect("structure", "/admin/structure/{action}",
                 controller="structure")
+
     map.connect("settings", "/admin/settings/{action}", controller="setting")
+
     map.connect("view", "/admin/view/{action}", controller="view")
 
     map.connect("banner_logo", "/admin/banner_logo.html", controller="admin",
@@ -87,20 +89,23 @@ def add_routes(config):
     map.connect("admin", "/admin/{action}", controller="admin", conditions=dict(method=['POST']))
 
     """
-    config.add_route('admin',
-                     '/admin',
-                     factory='aybu.core.utils.authentication.Authenticated')
+
+    config.add_handler('login-render', '/admin/login.html',
+                       handler='aybu.controlpanel.handlers.Login',
+                       action="show")
+    config.add_handler('login-submit', '/admin/login_submit.html',
+                       handler='aybu.controlpanel.handlers.Login',
+                       action="login")
+    config.add_handler('logout', '/admin/logout',
+                       handler='aybu.controlpanel.handlers.Login',
+                       action="logout")
 
 
-def add_views(config):
+    config.add_handler('edit', '/admin/edit',
+                       handler="aybu.controlpanel.handlers.Content",
+                       action="edit")
+    config.add_handler('spellchecker', '/admin/spellchecker.html',
+                       handler="aybu.controlpanel.handlers.Content",
+                       action="spellcheck")
 
-#    config.add_view(route_name='admin',
-#                    renderer='string',
-#                    view='aybu.controlpanel.views.homepage',
-#                    permission=pyramid.security.ALL_PERMISSIONS)
 
-
-#    config.add_view(route_name='login-render',
-#                    renderer='/admin/login.mako',
-#                    view='aybu.controlpanel.views.login')
-    pass

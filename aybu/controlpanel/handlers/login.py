@@ -16,22 +16,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import logging
-log = logging.getLogger(__name__)
-
-__all__ = ["SpellChecker"]
+from pyramid_handlers import action
+from . base import BaseHandler
 
 
-class SpellChecker(object):
-    """ Spellchecker using enchant """
+class Login(BaseHandler):
 
-    def __init__(self, lang):
-        import enchant
-        self.lang = "%s_%s" % (lang.lang, lang.country.upper())
-        self.dictionary = enchant.Dict(self.lang)
+    @action(renderer='/admin/login.mako')
+    def show(self):
+        raise NotImplementedError
 
-    def checkWords(self, words):
-        return [word for word in words if not self.dictionary.check(word)]
+    @action()
+    def login(self):
+        raise NotImplementedError
 
-    def getSuggestions(self, word):
-        return self.dictionary.suggest(word)
+    @action()
+    def logout(self):
+        raise NotImplementedError

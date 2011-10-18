@@ -16,22 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import logging
-log = logging.getLogger(__name__)
+from . login import Login
+from . content import Content
 
-__all__ = ["SpellChecker"]
-
-
-class SpellChecker(object):
-    """ Spellchecker using enchant """
-
-    def __init__(self, lang):
-        import enchant
-        self.lang = "%s_%s" % (lang.lang, lang.country.upper())
-        self.dictionary = enchant.Dict(self.lang)
-
-    def checkWords(self, words):
-        return [word for word in words if not self.dictionary.check(word)]
-
-    def getSuggestions(self, word):
-        return self.dictionary.suggest(word)
+__all__ = ['Login', 'Content']

@@ -17,21 +17,12 @@ limitations under the License.
 """
 
 import logging
-log = logging.getLogger(__name__)
-
-__all__ = ["SpellChecker"]
 
 
-class SpellChecker(object):
-    """ Spellchecker using enchant """
+class BaseHandler(object):
+    __autoexpose__ = None
 
-    def __init__(self, lang):
-        import enchant
-        self.lang = "%s_%s" % (lang.lang, lang.country.upper())
-        self.dictionary = enchant.Dict(self.lang)
-
-    def checkWords(self, words):
-        return [word for word in words if not self.dictionary.check(word)]
-
-    def getSuggestions(self, word):
-        return self.dictionary.suggest(word)
+    def __init__(self, request):
+        self.request = request
+        self.log = logging.getLogger("%s.%s" % ( __name__,
+                                                self.__class__.__name__))

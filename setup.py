@@ -39,8 +39,9 @@ keywords = ''
 
 include_package_data = True
 zip_safe = False
-requires = ('aybu-core', 'pyramid<1.3a', 'SQLAlchemy<0.8a', 'Babel',
-            'aybu-website', "PyEnchant>=1.6.3", "BeautifulSoup")
+requires = ('aybu-core', 'pyramid<1.3a', 'pyramid_handlers',
+            'SQLAlchemy<0.8a', 'Babel', "PyEnchant>=1.6.3", "BeautifulSoup",
+            'aybu-website', )
 setup_requires = ('versiontools >= 1.8',)
 tests_require = ('nose', 'coverage')
 test_suite = 'tests'
