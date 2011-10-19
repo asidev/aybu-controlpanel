@@ -16,16 +16,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from . login import LoginHandler
-from . content import ContentHandler
-from . image import ImageHandler
-from . file import FileHandler
-from . structure import StructureHandler
-from . language import LanguageHandler
-from . setting import SettingHandler
-from . admin import AdminHandler
-from . view import ViewHandler
+from pyramid_handlers import action
+from . base import BaseHandler
 
-__all__ = ['LoginHandler', 'ContentHandler', 'ImageHandler', 'FileHandler',
-           'StructureHandler', 'LanguageHandler', 'SettingHandler',
-           'AdminHandler', 'ViewHandler']
+
+__all__ = ['LanguageHandler']
+
+
+class LanguageHandler(BaseHandler):
+
+    @action(renderer='json')
+    def enable(self):
+        raise NotImplementedError
+
+    @action(renderer='json')
+    def disable(self):
+        raise NotImplementedError
+
+
+

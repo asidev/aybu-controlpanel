@@ -58,25 +58,6 @@ def includeme(config):
 
 def add_handlers(config):
     """ Old mappings:
-    map.connect("login-render", "/admin/login.html", controller="login",
-                action="show")
-    map.connect("login-submit", "/admin/login_submit.html", controller="login",
-                action="login")
-    map.connect("logout", "/admin/logout.html", controller="login",
-                action="logout")
-
-    map.connect("edit", "/admin/edit", controller="page",
-                action="edit_content")
-    map.connect("spellchecker", "/admin/spellchecker.html",
-                controller="spellchecker", action="rpc")
-
-    map.connect("images", "/admin/images/{action}.html", controller="image")
-    map.connect("files", "/admin/files/{action}.html", controller="files")
-
-    map.connect("language", "/admin/language/{action}", controller="language")
-
-    map.connect("structure", "/admin/structure/{action}",
-                controller="structure")
 
     map.connect("settings", "/admin/settings/{action}", controller="setting")
 
@@ -99,21 +80,30 @@ def add_handlers(config):
     config.add_handler('logout', '/admin/logout',
                        handler='aybu.controlpanel.handlers.LoginHandler',
                        action="logout")
-
     config.add_handler('edit', '/admin/edit',
                        handler="aybu.controlpanel.handlers.ContentHandler",
                        action="edit")
     config.add_handler('spellchecker', '/admin/spellchecker.html',
                        handler="aybu.controlpanel.handlers.ContentHandler",
                        action="spellcheck")
-
     config.add_handler('images', '/admin/images/{action}.html',
                        handler="aybu.controlpanel.handlers.ImageHandler")
     config.add_handler('files', '/admin/files/{action}.html',
                        handler='aybu.controlpanel.handlers.FileHandler')
-
     config.add_handler('language', '/admin/language/{action}.html',
                        handler="aybu.controlpanel.handlers.LanguageHandler")
     config.add_handler('structure', '/admin/structure/{action}.html',
                        handler='aybu.controlpanel.handlers.StructureHandler')
-
+    config.add_handler('settings', '/admin/settings/{action}',
+                       handler='aybu.controlpanel.handlers.SettingHandler')
+    config.add_handler('views', '/admin/view/{action}',
+                       handler='aybu.controlpanel.handlers.ViewHandler')
+    config.add_handler('banner_logo', '/admin/banner_logo.html',
+                       handler='aybu.controlpanel.handlers.AdminHandler',
+                       action="banner_logo", request_method='POST')
+    config.add_handler('admin_get', '/admin/admin/{action}.html',
+                       handler='aybu.controlpanel.handlers.AdminHandler',
+                       request_method='GET')
+    config.add_handler('admin_post', '/admin/admin/{action}',
+                       handler='aybu.controlpanel.handlers.AdminHandler',
+                       request_method='POST')
