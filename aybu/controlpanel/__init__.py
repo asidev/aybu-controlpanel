@@ -91,21 +91,25 @@ def add_handlers(config):
     """
 
     config.add_handler('login-render', '/admin/login.html',
-                       handler='aybu.controlpanel.handlers.Login',
+                       handler='aybu.controlpanel.handlers.LoginHandler',
                        action="show")
     config.add_handler('login-submit', '/admin/login_submit.html',
-                       handler='aybu.controlpanel.handlers.Login',
+                       handler='aybu.controlpanel.handlers.LoginHandler',
                        action="login")
     config.add_handler('logout', '/admin/logout',
-                       handler='aybu.controlpanel.handlers.Login',
+                       handler='aybu.controlpanel.handlers.LoginHandler',
                        action="logout")
 
 
     config.add_handler('edit', '/admin/edit',
-                       handler="aybu.controlpanel.handlers.Content",
+                       handler="aybu.controlpanel.handlers.ContentHandler",
                        action="edit")
     config.add_handler('spellchecker', '/admin/spellchecker.html',
-                       handler="aybu.controlpanel.handlers.Content",
+                       handler="aybu.controlpanel.handlers.ContentHandler",
                        action="spellcheck")
 
 
+    config.add_handler('images', '/admin/images/{action}.html',
+                       handler="aybu.controlpanel.handlers.ImageHandler")
+    config.add_handler('files', '/admin/files/{action}.html',
+                       handler='aybu.controlpanel.handlers.FileHandler')

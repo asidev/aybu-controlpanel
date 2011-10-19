@@ -16,7 +16,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from . login import Login
-from . content import Content
+from . login import LoginHandler
+from . content import ContentHandler
+from . image import ImageHandler
+from . file import FileHandler
 
-__all__ = ['Login', 'Content']
+__all__ = ['LoginHandler', 'ContentHandler', 'ImageHandler', 'FileHandler']

@@ -20,7 +20,10 @@ from pyramid_handlers import action
 from . base import BaseHandler
 
 
-class Login(BaseHandler):
+__all__ = ['LoginHandler']
+
+
+class LoginHandler(BaseHandler):
 
     @action(renderer='/admin/login.mako')
     def show(self):

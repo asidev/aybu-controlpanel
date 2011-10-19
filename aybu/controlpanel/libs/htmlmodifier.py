@@ -18,14 +18,14 @@ limitations under the License.
 
 import re
 import logging
-
 from BeautifulSoup import BeautifulSoup
-
 from aybu.core.models import File, Image, NodeInfo
 
-log = logging.getLogger(__name__)
 
-__all__ = ['associate_images']
+log = logging.getLogger(__name__)
+__all__ = ['associate_images', 'associate_files',
+           'associate_pages', 'update_img_src',
+           'change_href', 'target_to_rel']
 
 
 def associate_files(obj, soup):

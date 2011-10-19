@@ -22,8 +22,11 @@ from . base import BaseHandler
 from aybu.controlpanel.libs.spellchecking import SpellChecker
 
 
-class Content(BaseHandler):
-    """ Implements the RPC used by tinymce spellcheck plugin """
+__all__ = ['ContentHandler']
+
+
+class ContentHandler(BaseHandler):
+    """ Implements the RPC used by the tinymce spellcheck plugin """
 
     def create_error(self, str, level="FATAL"):
         return {

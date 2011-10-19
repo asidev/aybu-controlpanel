@@ -16,14 +16,32 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import logging
+from pyramid_handlers import action
+from . base import BaseHandler
 
 
-class BaseHandler(object):
-    __autoexpose__ = None
+__all__ = ['FileHandler']
+
+
+class FileHandler(BaseHandler):
 
     def __init__(self, request):
-        self.request = request
-        self.session = self.request.db_session
-        self.log = logging.getLogger("%s.%s" % ( __name__,
-                                                self.__class__.__name__))
+        super(FileHandler, self).__init__(request)
+        self.res = dict(success=True, error=dict())
+
+
+    @action(renderer='json', name='add')
+    def create(self):
+        raise NotImplementedError
+
+    @action(renderer='json')
+    def delete(self):
+        raise NotImplementedError
+
+    @action(renderer='json')
+    def list(self):
+        raise NotImplementedError
+
+    @action(renderer='/admin/filesmanager/template.mako')
+    def index(self):
+        raise NotImplementedError
