@@ -25,5 +25,5 @@ class BaseHandler(object):
     def __init__(self, request):
         self.request = request
         self.session = self.request.db_session
-        self.log = logging.getLogger("%s.%s" % ( __name__,
+        self.log = logging.getLogger("%s.%s" % ( self.__class__.__module__,
                                                 self.__class__.__name__))
