@@ -100,7 +100,6 @@ def add_handlers(config):
                        handler='aybu.controlpanel.handlers.LoginHandler',
                        action="logout")
 
-
     config.add_handler('edit', '/admin/edit',
                        handler="aybu.controlpanel.handlers.ContentHandler",
                        action="edit")
@@ -108,8 +107,13 @@ def add_handlers(config):
                        handler="aybu.controlpanel.handlers.ContentHandler",
                        action="spellcheck")
 
-
     config.add_handler('images', '/admin/images/{action}.html',
                        handler="aybu.controlpanel.handlers.ImageHandler")
     config.add_handler('files', '/admin/files/{action}.html',
                        handler='aybu.controlpanel.handlers.FileHandler')
+
+    config.add_handler('language', '/admin/language/{action}.html',
+                       handler="aybu.controlpanel.handlers.LanguageHandler")
+    config.add_handler('structure', '/admin/structure/{action}.html',
+                       handler='aybu.controlpanel.handlers.StructureHandler')
+

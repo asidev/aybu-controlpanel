@@ -20,5 +20,8 @@ from . login import LoginHandler
 from . content import ContentHandler
 from . image import ImageHandler
 from . file import FileHandler
+from . structure import StructureHandler
+from . language import LanguageHandler
 
-__all__ = ['LoginHandler', 'ContentHandler', 'ImageHandler', 'FileHandler']
+__all__ = ['LoginHandler', 'ContentHandler', 'ImageHandler', 'FileHandler',
+           'StructureHandler', 'LanguageHandler']
