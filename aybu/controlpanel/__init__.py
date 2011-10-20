@@ -57,19 +57,6 @@ def includeme(config):
 
 
 def add_handlers(config):
-    """ Old mappings:
-
-    map.connect("settings", "/admin/settings/{action}", controller="setting")
-
-    map.connect("view", "/admin/view/{action}", controller="view")
-
-    map.connect("banner_logo", "/admin/banner_logo.html", controller="admin",
-                action="banner_logo", conditions=dict(method=['POST']))
-
-    map.connect("admin", "/admin/{action}.html", controller="admin", conditions=dict(method=['GET']))
-    map.connect("admin", "/admin/{action}", controller="admin", conditions=dict(method=['POST']))
-
-    """
 
     config.add_handler('login-render', '/admin/login.html',
                        handler='aybu.controlpanel.handlers.LoginHandler',
