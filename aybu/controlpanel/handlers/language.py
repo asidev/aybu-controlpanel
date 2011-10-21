@@ -18,6 +18,7 @@ limitations under the License.
 
 from aybu.core.models import Language
 from aybu.core.utils.exceptions import ConstraintError
+from aybu.core.utils.exceptions import ValidationError
 from pyramid_handlers import action
 from . base import BaseHandler
 
@@ -30,17 +31,13 @@ class LanguageHandler(BaseHandler):
     @action(renderer='json')
     def enable(self):
         """
-            Enable language 'lang_id',
-            then create translations for that language:
-            create translations for each NodeInfo 
-            from 'src_clone_language_id' to 'lang_id'.
+            Enable the language identified by 'lang_id'.
         """
         try:
             language = Language.enable(self.session,
-                                       int(request.params.get('lang_id')))
-            translations = NodeInfo.translate(self.session,
-                                              int(request.params.get('src_clone_language_id')),
-                                              language)
+                                       int(self.request.params.get('lang_id')),
+                                       int(self.request.params.get('src_clone_language_id')))
+            self.session.flush()
         except ConstraintError as e:
             log.debug(e)
             self.session.rollback()
@@ -67,7 +64,37 @@ class LanguageHandler(BaseHandler):
 
     @action(renderer='json')
     def disable(self):
-        raise NotImplementedError
+        """
+            Disable the language identified by 'lang_id'.
+        """
+        try:
+            lang_id = int(self.request.params.get('lang_id'))
 
+            if session['lang'].id == lang_id:
+                raise ValidationError('Cannot disable current language.')
 
+            Language.disable(self.session, lang_id)
+            self.session.flush()
 
+        except ConstraintError as e:
+            self.session.rollback()
+            success = False
+            msg = _(u"Non è possibile rimuovere tutte le lingue")
+            log.debug(e)
+
+        except Exception as e:
+            self.session.rollback()
+            success = False,
+            msg = _(u"Errore durante il tentativo di rimuovere la lingua.")
+            log.error(e)
+            log.error('Unable to remove the requested language.')
+
+        else:
+            self.session.commit()
+            success = True
+            msg = _(u"Lingua rimossa con successo.")
+            log.debug("Language %s remove successfully", language_name)
+
+        #reload_routing()
+
+        return dict(success=success, msg=msg)
