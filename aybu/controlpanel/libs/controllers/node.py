@@ -110,11 +110,11 @@ def _sanitize_menu(session):
     try:
         max_menus = int(max_menus_setting.value)
     except:
-        session.query(Setting).update(dict(value=1))
+        max_menus_setting.value = 1
         max_menus = 1
 
     if max_menus < 1:
-        session.query(Setting).update(dict(value=1))
+        max_menus_setting.value = 1
         max_menus = 1
 
     log.debug('Total number of menus required by template is %d', max_menus)

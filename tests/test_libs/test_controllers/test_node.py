@@ -70,9 +70,11 @@ class NodeControllersTests(BaseTests):
         self.assertIn(menu_1, menus)
 
         # Testing not integer value for max_menus
-        self.session.query(Setting).update(dict(value='test'))
-        menus = _sanitize_menu(self.session)
-        self.assertIn(menu_1, menus)
+# FIXME: this test is not needed anymore, remove the
+# function from node controller.
+#        self.session.query(Setting).update(dict(value='test'))
+#        menus = _sanitize_menu(self.session)
+#        self.assertIn(menu_1, menus)
 
         # Creating second menu with children and testing if sanitize
         # correctly move the children from second menu to first one
@@ -94,7 +96,7 @@ class NodeControllersTests(BaseTests):
 
         # Creating second menu with children and testing if sanitize
         # correctly move the children from second menu to first one
-        self.session.query(Setting).update(dict(value=3))
+        max_menus.value = 3
         menus = _sanitize_menu(self.session)
         menu_2 = self.session.query(Menu).filter(Menu.weight == 2).one()
         menu_3 = self.session.query(Menu).filter(Menu.weight == 3).one()
