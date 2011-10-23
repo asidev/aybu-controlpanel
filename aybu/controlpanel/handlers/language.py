@@ -18,7 +18,7 @@ limitations under the License.
 
 from aybu.core.models import Language
 from aybu.core.utils.exceptions import ConstraintError
-from aybu.core.utils.exceptions import ValidationError
+#from aybu.core.utils.exceptions import ValidationError
 from pyramid_handlers import action
 from . base import BaseHandler
 
@@ -38,25 +38,27 @@ class LanguageHandler(BaseHandler):
                                        int(self.request.params.get('lang_id')),
                                        int(self.request.params.get('src_clone_language_id')))
             self.session.flush()
-        except ConstraintError as e:
-            log.debug(e)
+        except ConstraintError:
+            self.exception("While enabling language")
             self.session.rollback()
             success = False
-            msg = _(u'Hai raggiunto il numero massimo di lingue acquistate.')
+            msg = self.request.translate(
+                    'Hai raggiunto il numero massimo di lingue acquistate.')
 
-        except Exception as e:
+        except Exception:
             self.session.rollback()
-            log.error('Cannot enable requested language:')
-            log.error(e)
+            self.log.exception('Cannot enable requested language:')
             success = False
-            msg=_(u"Errore durante la procedura di aggiunta della lingua.")
+            msg=self.request.translate(
+                u"Errore durante la procedura di aggiunta della lingua.")
 
         else:
             self.session.commit()
-            log.debug('Enabled: %s', language)
+            self.log.debug('Enabled: %s', language)
             name = language.locale.get_display_name().title()
             success = True
-            msg = _(u'Lingua %s aggiunta con successo.' % name)
+            msg = self.request.translate(
+                u'Lingua %s aggiunta con successo.' % name)
 
         #FIXME: reload_routing()
 
@@ -70,8 +72,9 @@ class LanguageHandler(BaseHandler):
         try:
             lang_id = int(self.request.params.get('lang_id'))
 
-            if session['lang'].id == lang_id:
-                raise ValidationError('Cannot disable current language.')
+            # FIXME: why this? adjust when there will be a session
+            #if session['lang'].id == lang_id:
+            #    raise ValidationError('Cannot disable current language.')
 
             Language.disable(self.session, lang_id)
             self.session.flush()
@@ -79,22 +82,23 @@ class LanguageHandler(BaseHandler):
         except ConstraintError as e:
             self.session.rollback()
             success = False
-            msg = _(u"Non è possibile rimuovere tutte le lingue")
-            log.debug(e)
+            msg = self.request.translate(
+                        u"Non è possibile rimuovere tutte le lingue")
+            self.exception('Cannot remove all languages')
 
         except Exception as e:
             self.session.rollback()
             success = False,
-            msg = _(u"Errore durante il tentativo di rimuovere la lingua.")
-            log.error(e)
-            log.error('Unable to remove the requested language.')
+            msg = self.request.transalte(
+                    u"Errore durante il tentativo di rimuovere la lingua.")
+            self.log.exception('Unable to remove the requested language.')
 
         else:
             self.session.commit()
             success = True
-            msg = _(u"Lingua rimossa con successo.")
-            log.debug("Language %s remove successfully", language_name)
+            msg = self.request.translate(u"Lingua rimossa con successo.")
+            self.log.exception("Language remove successfully")
 
-        #reload_routing()
+        # FIXME: reload_routing()
 
         return dict(success=success, msg=msg)
