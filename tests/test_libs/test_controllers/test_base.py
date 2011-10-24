@@ -42,7 +42,8 @@ class BaseTests(unittest.TestCase):
         except IOError:
             raise Exception("Cannot find configuration file '%s'" % ini)
 
-        self.engine = engine_from_config_parser(self.config)
+        self.engine = engine_from_config_parser(self.config,
+                                                section='app:aybu-controlpanel')
         self.Session = create_session(self.engine)
         self.session = self.Session()
 

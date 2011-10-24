@@ -107,15 +107,11 @@ def delete(session, node_id):
 def _sanitize_menu(session):
     max_menus_setting = session.query(Setting).\
                         filter(Setting.name==u'max_menus').one()
-    try:
-        max_menus = int(max_menus_setting.value)
-    except:
-        max_menus_setting.value = 1
-        max_menus = 1
 
-    if max_menus < 1:
+    if max_menus_setting.value < 1:
         max_menus_setting.value = 1
-        max_menus = 1
+
+    max_menus = max_menus_setting.value
 
     log.debug('Total number of menus required by template is %d', max_menus)
 

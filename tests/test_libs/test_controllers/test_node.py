@@ -40,27 +40,13 @@ log = logging.getLogger(__name__)
 
 class NodeControllersTests(BaseTests):
 
-    """
-    def test_index(self):
-        raise NotImplementedError()
-
-    def test_create(self):
-        raise NotImplementedError()
-
-    def test_update(self):
-        raise NotImplementedError()
-
-    def test_search(self):
-        raise NotImplementedError()
-    """
-
     def test_sanitize_menu(self):
 
         menu_1 = Menu(id=1, parent=None, weight=1)
         self.session.add(menu_1)
 
         max_menus = Setting(name=u'max_menus',
-                            value=u'-1',
+                            raw_value=u'-1',
                             ui_administrable=False,
                             type=SettingType(name=u'integer', raw_type=u'int'))
         self.session.add(max_menus)
@@ -68,13 +54,6 @@ class NodeControllersTests(BaseTests):
         # Testing negative value for max_menus
         menus = _sanitize_menu(self.session)
         self.assertIn(menu_1, menus)
-
-        # Testing not integer value for max_menus
-# FIXME: this test is not needed anymore, remove the
-# function from node controller.
-#        self.session.query(Setting).update(dict(value='test'))
-#        menus = _sanitize_menu(self.session)
-#        self.assertIn(menu_1, menus)
 
         # Creating second menu with children and testing if sanitize
         # correctly move the children from second menu to first one
@@ -106,7 +85,7 @@ class NodeControllersTests(BaseTests):
 
     def test_create_structure(self):
         max_menus = Setting(name=u'max_menus',
-                            value=u'1',
+                            raw_value=u'1',
                             ui_administrable=False,
                             type=SettingType(name=u'integer', raw_type=u'int'))
         self.session.add(max_menus)
@@ -130,14 +109,14 @@ class NodeControllersTests(BaseTests):
     def test_get_item_info(self):
         file_ = StringIO.StringIO(
 """
-[app:aybu-website]
+[app:aybu-controlpanel]
 default_data = data/default_data.json
 """)
         config = ConfigParser.ConfigParser()
         config.readfp(file_)
         data = default_data_from_config(config)
 
-        populate(self.config, data)
+        populate(self.config, data, config_section='app:aybu-controlpanel')
 
         it = self.session.query(Language).filter(Language.lang == u'it').one()
 

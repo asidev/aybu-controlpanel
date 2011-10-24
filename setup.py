@@ -43,7 +43,7 @@ requires = ('aybu-core', 'pyramid<1.3a', 'pyramid_handlers',
             'SQLAlchemy<0.8a', 'Babel', "PyEnchant>=1.6.3", "BeautifulSoup",
             'aybu-website', )
 setup_requires = ('versiontools >= 1.8',)
-tests_require = ('nose', 'coverage')
+tests_require = ('nose', 'coverage', 'webtest')
 test_suite = 'tests'
 
 entry_points = """\

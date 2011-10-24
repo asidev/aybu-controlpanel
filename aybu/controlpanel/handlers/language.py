@@ -38,23 +38,23 @@ class LanguageHandler(BaseHandler):
                                        int(self.request.params.get('lang_id')),
                                        int(self.request.params.get('src_clone_language_id')))
             self.session.flush()
-        except ConstraintError:
-            self.exception("While enabling language")
+        except ConstraintError as e:
+            self.log.exception(e)
             self.session.rollback()
             success = False
             msg = self.request.translate(
                     'Hai raggiunto il numero massimo di lingue acquistate.')
 
-        except Exception:
+        except Exception as e:
+            self.log.exception('Cannot enable requested language: %s', e)
             self.session.rollback()
-            self.log.exception('Cannot enable requested language:')
             success = False
             msg=self.request.translate(
                 u"Errore durante la procedura di aggiunta della lingua.")
 
         else:
-            self.session.commit()
             self.log.debug('Enabled: %s', language)
+            self.session.commit()
             name = language.locale.get_display_name().title()
             success = True
             msg = self.request.translate(
@@ -80,24 +80,24 @@ class LanguageHandler(BaseHandler):
             self.session.flush()
 
         except ConstraintError as e:
+            self.log.exception(e)
             self.session.rollback()
             success = False
             msg = self.request.translate(
                         u"Non è possibile rimuovere tutte le lingue")
-            self.exception('Cannot remove all languages')
 
         except Exception as e:
             self.session.rollback()
-            success = False,
-            msg = self.request.transalte(
+            success = False
+            msg = self.request.translate(
                     u"Errore durante il tentativo di rimuovere la lingua.")
-            self.log.exception('Unable to remove the requested language.')
+            self.log.exception('Unable to remove the requested language: %s', e)
 
         else:
             self.session.commit()
             success = True
             msg = self.request.translate(u"Lingua rimossa con successo.")
-            self.log.exception("Language remove successfully")
+            self.log.debug("Language remove successfully.")
 
         # FIXME: reload_routing()
 
