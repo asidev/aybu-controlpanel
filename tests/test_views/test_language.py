@@ -25,62 +25,52 @@ class LanguageHandlerFunctionalTests(FunctionalTestsBase):
 
     def test_enable_disable_language(self):
 
-        resource = self.testapp.get('/admin/language/enable.html', status=200)
-        response = json.loads(resource.body)
-        self.failUnless('success' in response)
-        self.failUnless('msg' in response)
-        self.failUnless(response['success'] is False)
+        response = self.testapp.get('/admin/language/enable.html', status=200)
+        self.failUnless('success' in response.json)
+        self.failUnless('msg' in response.json)
+        self.failUnless(response.json['success'] is False)
 
         url = '/admin/language/enable.html?lang_id=2'
-        resource = self.testapp.get(url, status=200)
-        response = json.loads(resource.body)
-        self.failUnless(response['success'] is False)
+        response = self.testapp.get(url, status=200)
+        self.failUnless(response.json['success'] is False)
 
         url = '/admin/language/enable.html?src_clone_language_id=1'
-        resource = self.testapp.get(url, status=200)
-        response = json.loads(resource.body)
-        self.failUnless(response['success'] is False)
+        response = self.testapp.get(url, status=200)
+        self.failUnless(response.json['success'] is False)
 
         url = '/admin/language/enable.html?lang_id=2&src_clone_language_id=1'
-        resource = self.testapp.get(url, status=200)
-        response = json.loads(resource.body)
-        self.failUnless(response['success'] is False) # max_languages reached!
+        response = self.testapp.get(url, status=200)
+        self.failUnless(response.json['success'] is False) # max_languages reached!
 
-        resource = self.testapp.get('/admin/language/disable.html', status=200)
-        response = json.loads(resource.body)
-        self.failUnless('success' in response)
-        self.failUnless('msg' in response)
-        self.failUnless(response['success'] is False)
+        response = self.testapp.get('/admin/language/disable.html', status=200)
+        self.failUnless('success' in response.json)
+        self.failUnless('msg' in response.json)
+        self.failUnless(response.json['success'] is False)
 
         url = '/admin/language/disable.html?lang_id=2'
-        resource = self.testapp.get(url, status=200)
-        response = json.loads(resource.body)
-        self.failUnless('success' in response)
-        self.failUnless('msg' in response)
-        self.failUnless(response['success'] is True)
+        response = self.testapp.get(url, status=200)
+        self.failUnless('success' in response.json)
+        self.failUnless('msg' in response.json)
+        self.failUnless(response.json['success'] is True)
 
         url = '/admin/language/enable.html?lang_id=2&src_clone_language_id=1'
-        resource = self.testapp.get(url, status=200)
-        response = json.loads(resource.body)
-        self.failUnless(response['success'] is True)
+        response = self.testapp.get(url, status=200)
+        self.failUnless(response.json['success'] is True)
 
         url = '/admin/language/disable.html?lang_id=3'
-        resource = self.testapp.get(url, status=200)
-        response = json.loads(resource.body)
-        self.failUnless('success' in response)
-        self.failUnless('msg' in response)
-        self.failUnless(response['success'] is True)
+        response = self.testapp.get(url, status=200)
+        self.failUnless('success' in response.json)
+        self.failUnless('msg' in response.json)
+        self.failUnless(response.json['success'] is True)
 
         url = '/admin/language/disable.html?lang_id=2'
-        resource = self.testapp.get(url, status=200)
-        response = json.loads(resource.body)
-        self.failUnless('success' in response)
-        self.failUnless('msg' in response)
-        self.failUnless(response['success'] is True)
+        response = self.testapp.get(url, status=200)
+        self.failUnless('success' in response.json)
+        self.failUnless('msg' in response.json)
+        self.failUnless(response.json['success'] is True)
 
         url = '/admin/language/disable.html?lang_id=1'
-        resource = self.testapp.get(url, status=200)
-        response = json.loads(resource.body)
-        self.failUnless('success' in response)
-        self.failUnless('msg' in response)
-        self.failUnless(response['success'] is False) #Last enabled language.
+        response = self.testapp.get(url, status=200)
+        self.failUnless('success' in response.json)
+        self.failUnless('msg' in response.json)
+        self.failUnless(response.json['success'] is False) #Last enabled language.

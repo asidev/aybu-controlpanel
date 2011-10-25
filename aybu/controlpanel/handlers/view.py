@@ -16,16 +16,74 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from aybu.core.models import Language, View
 from pyramid_handlers import action
 from . base import BaseHandler
+import logging
 
 
 __all__ = ['ViewHandler']
+log = logging.getLogger(__file__)
 
 
 class ViewHandler(BaseHandler):
 
+    _response_metadata = dict(root='dataset',
+                              totalProperty='dataset_len',
+                              idProperty='id',
+                              successProperty='success',
+                              fields=['id', 'description'])
+    _response = dict(metaData=_response_metadata,
+                     success=True,
+                     dataset=[],
+                     dataset_len=0)
+
+    def _list(self, session):
+
+        # FIXME: adjust when there will be a session
+        language = Language.first(self.session)
+        # language = session['lang']
+
+        items = []
+
+        for view in View.all(session):
+
+            item = dict(id=view.id, description=None)
+
+            if not view.descriptions:
+                raise RuntimeError('View %s has no description in any language',
+                                    view.id)
+
+            descriptions = [description
+                            for description in view.descriptions
+                            if description.language == language]
+
+            if descriptions:
+                item['description'] = descriptions[0].description
+
+            else:
+                item['description'] = view.descriptions[0].description
+
+            items.append(item)
+
+        log.debug(items)
+
+        return items
+
     @action(renderer='json')
     def list(self):
-        raise NotImplementedError
 
+        response = self._response.copy()
+
+        try:
+            response['dataset'].extend(self._list(self.session))
+            response['dataset_len'] = len(response['dataset'])
+            self.request.response.status = 200
+
+        except Exception as e:
+            log.exception(e)
+            response['success'] = False
+            response['message'] = str(e)
+            self.request.response.status = 500
+
+        return response
