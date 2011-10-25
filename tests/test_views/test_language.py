@@ -16,56 +16,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from aybu.controlpanel import main
-from aybu.core.models import populate
-from pyramid import testing
-from webtest import TestApp
-import ConfigParser
+from . base import FunctionalTestsBase
 import json
-import logging
-import os.path
-import unittest
-
-log = logging.getLogger(__name__)
 
 
-class LanguageHandlerFunctionalTests(unittest.TestCase):
+class LanguageHandlerFunctionalTests(FunctionalTestsBase):
 
-    def setUp(self):
-
-        # Step 1: open & read config file.
-        parser = ConfigParser.ConfigParser()
-        config = os.path.realpath(os.path.join(os.path.dirname(__file__),
-                                               '..', '..', 'tests.ini'))
-
-        try:
-            with open(config) as f:
-                parser.readfp(f)
-
-        except IOError:
-            raise Exception("Cannot find configuration file '%s'" % config)
-
-        # Section of INI file from which read settings.
-        section = 'app:aybu-controlpanel'
-
-        # Step 2: load default data
-        default_data = parser.get(section, 'default_data')
-        databag = os.path.realpath(os.path.join(os.path.dirname(config),
-                                                os.path.dirname(default_data),
-                                                os.path.basename(default_data)))
-        try:
-            with open(databag) as f:
-                data = json.loads(f.read())
-
-        except IOError:
-            raise Exception("Cannot find data file '%s'" % databag)
-
-        populate(parser, data, section)
-
-        settings = {opt: parser.get(section, opt)
-                    for opt in parser.options(section)}
-        app = main({}, **settings)
-        self.testapp = TestApp(app)
 
     def test_enable_disable_language(self):
 
