@@ -20,8 +20,7 @@ from BeautifulSoup import BeautifulSoup
 from pyramid_handlers import action
 from aybu.controlpanel.libs.htmlmodifier import update_img_src
 from aybu.core.models import (Image,
-                              Setting,
-                              PageInfo)
+                              Setting)
 from . base import BaseHandler
 
 
@@ -36,24 +35,16 @@ class ImageHandler(BaseHandler):
 
     def handle_exception(self, e, fname=''):
         self.log.exception("Error in %s", fname)
-        self.log.debug("%s: Rolling back session", fname)
         self.session.rollback()
-        self.log.debug("%s: Session rolled back", fname)
         self.res['success'] = False
         self.res["error"] = dict(
                     message="Error: (%s) %s" % (type(e).__name__, str(e))
         )
 
-    def is_used(self, id_):
-        query = self.session.query(PageInfo).filter(
-                        PageInfo.images.any(Image.id == id_)
-                )
-        return [pageinfo.id for pageinfo in query.all()]
-
     # FIXME: actions is add: change to create in calling code
     @action(renderer='json', name='add')
     def create(self):
-        num_images = self.session.query(Image).count()
+        num_images = Image.count(self.session)
         max_images = Setting.get(self.session, 'max_images')
         if max_images > 0 and max_images <= num_images:
             self.res['success'] = False
@@ -81,28 +72,26 @@ class ImageHandler(BaseHandler):
     def update(self):
         try:
             id_ = int(self.request.params['id'])
-            img = self.session.query(Image).filter(Image.id == id_).one()
+            image = Image.get(self.session, id_)
             self.res['errors'] = dict()
 
             try:
                 name = self.request.params['name']
-                if name != img.name:
+                if name != image.name:
 
                     self.log.debug("Updating name of image %d to %s", id, name)
                     if len(name) < 1:
                         raise TypeError("Il nome non può essere vuoto")
 
-                    old_name = img.name
-                    img.name = name
+                    old_name = image.name
+                    image.name = name
                     self.log.debug("Updating src of img tag "
                               "on translations using the image")
 
-                    translations = self.session.query(PageInfo)\
-                              .filter(PageInfo.images.any(Image.id == id_))\
-                              .all()
+                    translations = image.get_ref_pages(self.session)
                     for t in translations:
                         soup = BeautifulSoup(t.html, smartQuotesTo=None)
-                        soup = update_img_src(img.id, old_name, name, soup)
+                        soup = update_img_src(image.id, old_name, name, soup)
                         t.html = unicode(soup)
 
             except KeyError as e:
@@ -110,15 +99,15 @@ class ImageHandler(BaseHandler):
                 pass
 
             try:
-                # FIXME check pufferfish API
-                img.update_image(self.request.params['file'].file)
+                image.source = self.request.params['file'].file
             except AttributeError as e:
+                # no new file in request
                 pass
 
             self.session.commit()
             del self.res["errors"]
             # FIXME handle purge
-            #aybu.cms.lib.cache.http.purge_http(img.url)
+            #aybu.cms.lib.cache.http.purge_http(image.url)
 
         except TypeError as e:
             self.res['success'] = False
@@ -132,18 +121,16 @@ class ImageHandler(BaseHandler):
 
     @action(renderer='json')
     def remove(self):
-        # TODO
         try:
-            id = int(self.request.params['id'])
-            if len(self.is_used(id)) > 0:
+            id_ = int(self.request.params['id'])
+            image = Image.get(self.session, id_)
+            if len(image.get_ref_pages(self.session)) > 0:
                 raise TypeError("Immagine %d in uso, "
                                 "impossibile rimuoverla" % id)
-            image = Image.get_by(id=id)
-            image_url = image.url
             image.delete()
             self.session.commit()
             # FIXME handle purge
-            #aybu.cms.lib.cache.http.purge_http(image_url)
+            #aybu.cms.lib.cache.http.purge_http(image.url)
 
         except Exception as e:
             self.handle_exception(e)
@@ -152,23 +139,16 @@ class ImageHandler(BaseHandler):
 
     @action(renderer='json')
     def list(self):
-        # TODO
-        q = Image.query
-        count = q.count()
+        count = Image.count(self.session)
         self.res = {"datalen": count}
         self.res['data'] = []
-        for img in q.all():
-            d = img.to_dict()
-            d['used_by'] = self.is_used(img.id)
-            thumbnails = img.thumbnails
-            for k in thumbnails:
-                d['%s_url' % (k)] = thumbnails[k].url
+        for img in Image.all(self.session):
+            d = img.to_dict(ref_pages=True)
             self.res['data'].append(d)
 
         return self.res
 
     @action(renderer='/admin/imagemanager/template.mako')
     def index(self):
-        # TODO
         c.tiny = True if "tiny" in request.params else False
         return render("%s/%s/%s" % ("admin", "imagemanager", "template.mako"))
