@@ -102,7 +102,7 @@ class ImageHandlerFunctionalTests(FunctionalTestsBase):
         response = self.testapp.post(self.add_url,
                                      params=dict(name='testfile.png'),
                                      upload_files=[('file', self.sample_image)])
-        new_image_id = int(response.json['id'])
+        new_image_id = response.json['id']
 
 
         # test missing id_
@@ -112,15 +112,40 @@ class ImageHandlerFunctionalTests(FunctionalTestsBase):
         self.assertIn('id', response.json['errors'])
 
         # test not found
-        wrong_id = new_image_id + 1
+        wrong_id = int(new_image_id) + 1
         response = self.testapp.post(self.update_url, params={'id': wrong_id})
         self.assertFalse(response.json['success'])
         self.assertIn('errors', response.json)
         self.assertIn('id', response.json['errors'])
 
         # test no params
+        response = self.testapp.post(self.update_url, params={'id': new_image_id})
+        self.assertFalse(response.json['success'])
+        self.assertIn('errors', response.json)
+        self.assertIn('name', response.json['errors'])
+        self.assertIn('file', response.json['errors'])
+
+        # test wrong name
+        response = self.testapp.post(self.update_url,
+                                    params={'id': new_image_id,
+                                            'name': ''})
+        self.assertFalse(response.json['success'])
+        self.assertIn('errors', response.json)
+        self.assertIn('name', response.json['errors'])
 
 
+        # test update name ok
+        response = self.testapp.post(self.update_url,
+                                     params={'id': new_image_id, 'name':
+                                             'nuovonome.png'})
+        self.assertTrue(response.json['success'])
+        self.assertNotIn('errors', response.json)
 
+        # test update file ok
+        response = self.testapp.post(self.update_url,
+                                     params={'id': new_image_id},
+                                     upload_files=[('file', self.sample_image)])
+        self.assertTrue(response.json['success'])
+        self.assertNotIn('errors', response.json)
 
 

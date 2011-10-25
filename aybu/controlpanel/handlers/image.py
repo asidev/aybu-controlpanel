@@ -32,7 +32,7 @@ class ImageHandler(BaseHandler):
 
     def __init__(self, request):
         super(ImageHandler, self).__init__(request)
-        self.res = dict(success=True, error=dict())
+        self.res = dict(success=False, error=dict())
 
     def handle_exception(self, e, fname=''):
         self.log.exception("Error in %s", fname)
@@ -57,15 +57,18 @@ class ImageHandler(BaseHandler):
             name = self.request.params['name']
             up_file = self.request.POST['file']
             image = Image(source=up_file.file, name=name, session=self.session)
+
+        except Exception as e:
+            self.handle_exception(e)
+
+        else:
             self.session.commit()
             self.res['id'] = image.id
+            self.res['success'] = True
             # this should not be needed, but for safety we purge
             # the url in proxy anyway
             # FIXME: purge varnish :
             # aybu.cms.lib.cache.http.purge_http(image.url)
-
-        except Exception as e:
-            self.handle_exception(e)
 
         finally:
             return self.res
@@ -88,7 +91,7 @@ class ImageHandler(BaseHandler):
                 name = self.request.params['name']
                 if name != image.name:
 
-                    self.log.debug("Updating name of image %d to %s", id, name)
+                    self.log.debug("Updating name of image %d to %s", id_, name)
                     if len(name) < 1:
                         raise TypeError("Il nome non può essere vuoto")
 
@@ -103,23 +106,34 @@ class ImageHandler(BaseHandler):
                         soup = update_img_src(image.id, old_name, name, soup)
                         t.html = unicode(soup)
 
-            if 'file' in self.request.params and \
-              hasattr(self.request.params['file'], file):
-                image.source = self.request.params['file'].file
-                valid = True
+            if 'file' in self.request.POST:
+                if hasattr(self.request.POST['file'], file):
+                    self.log.debug("Updating file for image %s", image)
+                    valid = True
+                    image.source = self.request.POST['file'].file
+                else:
+                    self.log.error("%s has not attr file",
+                              self.request.params['file'])
+                    raise AttributeError('file')
 
             if not valid:
                 raise KeyError('required')
 
+            self.log.debug("Fin")
+
         except KeyError as e:
+            self.log.debug('Missing required params in request')
             self.res['success'] = False
             self.res['errors']['name'] = "Missing value"
+            self.res['errors']['file'] = "Missing value"
 
         except NoResultFound as e:
+            self.log.debug('Cannot found image or ID missing in params')
             self.res['success'] = False
             self.res['errors']['id'] = 'Image not found'
 
         except TypeError as e:
+            self.log.debug('Invalid name %s' % (self.request.params['name']))
             self.res['success'] = False
             self.res['errors']['name'] = str(e)
 
@@ -128,6 +142,7 @@ class ImageHandler(BaseHandler):
             self.handle_exception(e, "update")
 
         else:
+            self.log.debug("Updating ok, committing")
             del self.res["errors"]
             self.session.commit()
             # FIXME handle purge
