@@ -18,6 +18,7 @@ limitations under the License.
 
 from BeautifulSoup import BeautifulSoup
 from pyramid_handlers import action
+from sqlalchemy.orm.exc import NoResultFound
 from aybu.controlpanel.libs.htmlmodifier import update_img_src
 from aybu.core.models import (Image,
                               Setting)
@@ -45,11 +46,11 @@ class ImageHandler(BaseHandler):
     @action(renderer='json', name='add')
     def create(self):
         num_images = Image.count(self.session)
-        max_images = Setting.get(self.session, 'max_images')
+        max_images = Setting.get(self.session, 'max_images').value
         if max_images > 0 and max_images <= num_images:
             self.res['success'] = False
-            self.res["error"] = _(u"Hai raggiunto il numero "
-                                  "massimo di immagini acquistate.")
+            self.res["error"] = self.request.translate(
+                u"Hai raggiunto il numero massimo di immagini acquistate.")
             return self.res
 
         try:
@@ -57,6 +58,7 @@ class ImageHandler(BaseHandler):
             up_file = self.request.POST['file']
             image = Image(source=up_file.file, name=name, session=self.session)
             self.session.commit()
+            self.res['id'] = image.id
             # this should not be needed, but for safety we purge
             # the url in proxy anyway
             # FIXME: purge varnish :
@@ -71,11 +73,18 @@ class ImageHandler(BaseHandler):
     @action(renderer='json')
     def update(self):
         try:
-            id_ = int(self.request.params['id'])
-            image = Image.get(self.session, id_)
             self.res['errors'] = dict()
 
             try:
+                id_ = int(self.request.params['id'])
+            except KeyError:
+                raise NoResultFound('Missing id')
+
+            image = Image.get(self.session, id_)
+            valid = False
+
+            if 'name' in self.request.params:
+                valid = True
                 name = self.request.params['name']
                 if name != image.name:
 
@@ -94,20 +103,21 @@ class ImageHandler(BaseHandler):
                         soup = update_img_src(image.id, old_name, name, soup)
                         t.html = unicode(soup)
 
-            except KeyError as e:
-                # no name in request
-                pass
-
-            try:
+            if 'file' in self.request.params and \
+              hasattr(self.request.params['file'], file):
                 image.source = self.request.params['file'].file
-            except AttributeError as e:
-                # no new file in request
-                pass
+                valid = True
 
-            self.session.commit()
-            del self.res["errors"]
-            # FIXME handle purge
-            #aybu.cms.lib.cache.http.purge_http(image.url)
+            if not valid:
+                raise KeyError('required')
+
+        except KeyError as e:
+            self.res['success'] = False
+            self.res['errors']['name'] = "Missing value"
+
+        except NoResultFound as e:
+            self.res['success'] = False
+            self.res['errors']['id'] = 'Image not found'
 
         except TypeError as e:
             self.res['success'] = False
@@ -117,7 +127,14 @@ class ImageHandler(BaseHandler):
             self.res['errors']['file'] = str(e)
             self.handle_exception(e, "update")
 
-        return self.res
+        else:
+            del self.res["errors"]
+            self.session.commit()
+            # FIXME handle purge
+            #aybu.cms.lib.cache.http.purge_http(image.url)
+
+        finally:
+            return self.res
 
     @action(renderer='json')
     def remove(self):
