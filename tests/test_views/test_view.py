@@ -22,7 +22,7 @@ from . base import FunctionalTestsBase
 class ViewHandlerFunctionalTests(FunctionalTestsBase):
 
     def test_list_view(self):
-        response = self.testapp.get('/admin/view/list', status=200)
+        response = self.testapp.get('/admin/views/list', status=200)
         self.failUnless('success' in response.json)
         self.failUnless('metaData' in response.json)
         self.failUnless(response.json['success'] is True)
