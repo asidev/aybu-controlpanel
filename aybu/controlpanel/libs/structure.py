@@ -18,11 +18,8 @@ limitations under the License.
 
 import logging
 
-from aybu.controlpanel.lib.exc import ConstraintException, QuotaException
-from aybu.controlpanel.lib.htmlmodifier import change_href
-
-from aybu.website.lib.common import urlify
-from aybu.core.models import Node, NodeInfo, Menu, Page, Section
+"""
+from aybu.core.models import NodeInfo, Menu, Page, Section
 from aybu.core.models import InternalLink, ExternalLink, Setting
 from aybu.core.models import View, Language
 
@@ -56,9 +53,8 @@ def create_site_node(session, parametri):
     # create_node()
     # create nodeinfo with the language of te request
     # clone nodeinfo in other languages
-
-
-
+    pass
+"""
 
 
 

@@ -20,7 +20,7 @@ import ConfigParser
 import logging
 import StringIO
 
-from aybu.core.utils.exceptions import ValidationError, ConstraintError
+from aybu.core.exc import ValidationError, QuotaError
 from . test_base import BaseTests
 
 from aybu.controlpanel.libs.controllers.node import move, delete
@@ -390,7 +390,7 @@ default_data = data/default_data.json
             delete(self.session, 8)
 
         # Trying to delete the last page.  This operation should not be allowed
-        with self.assertRaises(ConstraintError):
+        with self.assertRaises(QuotaError):
             delete(self.session, 9)
 
     def test_move(self):

@@ -17,8 +17,7 @@ limitations under the License.
 """
 
 from aybu.core.models import Language
-from aybu.core.utils.exceptions import ConstraintError
-#from aybu.core.utils.exceptions import ValidationError
+from aybu.core.exc import QuotaError
 from pyramid_handlers import action
 from . base import BaseHandler
 
@@ -38,7 +37,8 @@ class LanguageHandler(BaseHandler):
                                        int(self.request.params.get('lang_id')),
                                        int(self.request.params.get('src_clone_language_id')))
             self.session.flush()
-        except ConstraintError as e:
+
+        except QuotaError as e:
             self.log.exception(e)
             self.session.rollback()
             success = False
@@ -59,10 +59,10 @@ class LanguageHandler(BaseHandler):
             success = True
             msg = self.request.translate(
                 u'Lingua %s aggiunta con successo.' % name)
+            #FIXME: reload_routing()
 
-        #FIXME: reload_routing()
-
-        return dict(success=success, msg=msg)
+        finally:
+            return dict(success=success, msg=msg)
 
     @action(renderer='json')
     def disable(self):
@@ -79,7 +79,7 @@ class LanguageHandler(BaseHandler):
             Language.disable(self.session, lang_id)
             self.session.flush()
 
-        except ConstraintError as e:
+        except QuotaError as e:
             self.log.exception(e)
             self.session.rollback()
             success = False
@@ -98,7 +98,7 @@ class LanguageHandler(BaseHandler):
             success = True
             msg = self.request.translate(u"Lingua rimossa con successo.")
             self.log.debug("Language remove successfully.")
+            # FIXME: reload_routing()
 
-        # FIXME: reload_routing()
-
-        return dict(success=success, msg=msg)
+        finally:
+            return dict(success=success, msg=msg)

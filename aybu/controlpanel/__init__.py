@@ -16,8 +16,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from aybu.core.utils.authentication import AuthenticationPolicy
-from aybu.core.utils.request import Request
+from aybu.core.authentication import AuthenticationPolicy
+from aybu.core.request import Request
 from aybu.core.models import Base
 import aybu.website
 from pyramid.config import Configurator

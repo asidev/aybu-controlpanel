@@ -19,7 +19,7 @@ limitations under the License.
 import logging
 
 from aybu.core.models import Node, Menu, Page, Setting
-from aybu.core.utils.exceptions import ValidationError, ConstraintError
+from aybu.core.exc import ValidationError, QuotaError
 
 log = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ def delete(session, node_id):
         if isinstance(node, Page) and Page.is_last_page(session):
             error_message = "Cannot remove last page"
             log.warn(error_message)
-            raise ConstraintError(error_message)
+            raise QuotaError(error_message)
 
         old_weight = node.weight
 

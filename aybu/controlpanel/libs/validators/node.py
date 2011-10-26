@@ -18,10 +18,10 @@ limitations under the License.
 
 import logging
 
-from aybu.core.models import Node, Page, Section, View
+from aybu.core.models import Node, Page, View
 from aybu.core.utils import get_object_from_python_path
 from aybu.core.utils.modifiers import boolify
-from aybu.core.utils.exceptions import ValidationError, ConstraintError
+from aybu.core.exc import ValidationError, QuotaError
 
 __all__ = []
 
@@ -90,7 +90,7 @@ def validate_page(session, **params):
     if not Page.new_page_allowed(session):
         msg = 'Max number of pages has been reached'
         log.error(msg)
-        raise ConstraintError(msg)
+        raise QuotaError(msg)
 
     try:
         params['home'] = boolify(params.get('home'))
