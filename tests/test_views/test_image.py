@@ -21,8 +21,10 @@ import pkg_resources
 import shutil
 from . base import FunctionalTestsBase
 
+
 class MaxImagesException(Exception):
     pass
+
 
 class OkException(Exception):
     pass
