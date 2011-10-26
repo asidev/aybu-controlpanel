@@ -38,7 +38,7 @@ class ImageHandler(BaseHandler):
         self.log.exception("Error in %s", fname)
         self.session.rollback()
         self.res['success'] = False
-        self.res["error"] = dict(
+        self.res["errors"] = dict(
                     message="Error: (%s) %s" % (type(e).__name__, str(e))
         )
 
@@ -107,19 +107,12 @@ class ImageHandler(BaseHandler):
                         t.html = unicode(soup)
 
             if 'file' in self.request.POST:
-                if hasattr(self.request.POST['file'], file):
-                    self.log.debug("Updating file for image %s", image)
-                    valid = True
-                    image.source = self.request.POST['file'].file
-                else:
-                    self.log.error("%s has not attr file",
-                              self.request.params['file'])
-                    raise AttributeError('file')
+                self.log.debug("Updating file for image %s", image)
+                valid = True
+                image.source = self.request.POST['file'].file
 
             if not valid:
                 raise KeyError('required')
-
-            self.log.debug("Fin")
 
         except KeyError as e:
             self.log.debug('Missing required params in request')
@@ -143,8 +136,9 @@ class ImageHandler(BaseHandler):
 
         else:
             self.log.debug("Updating ok, committing")
-            del self.res["errors"]
             self.session.commit()
+            del self.res["errors"]
+            self.res['success'] = True
             # FIXME handle purge
             #aybu.cms.lib.cache.http.purge_http(image.url)
 
@@ -160,14 +154,18 @@ class ImageHandler(BaseHandler):
                 raise TypeError("Immagine %d in uso, "
                                 "impossibile rimuoverla" % id)
             image.delete()
-            self.session.commit()
-            # FIXME handle purge
-            #aybu.cms.lib.cache.http.purge_http(image.url)
 
         except Exception as e:
             self.handle_exception(e)
 
-        return self.res
+        else:
+            self.session.commit()
+            self.res['success'] = True
+            # FIXME handle purge
+            #aybu.cms.lib.cache.http.purge_http(image.url)
+
+        finally:
+            return self.res
 
     @action(renderer='json')
     def list(self):
