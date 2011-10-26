@@ -41,6 +41,7 @@ class ImageHandlerFunctionalTests(FunctionalTestsBase):
         self.update_url = '/admin/images/update.html'
         self.remove_url = '/admin/images/remove.html'
         self.list_url = '/admin/images/list.html'
+        self.index_url = '/admin/images/index.html'
         self.sample_image = self._get_test_file('sample.png')
 
         instance_module_name = 'aybu.instances.website_tests'
@@ -218,5 +219,11 @@ class ImageHandlerFunctionalTests(FunctionalTestsBase):
         self.assertEqual(2, len(response.json['data']))
         retr_ids = [i['id'] for i in response.json['data']]
         self.assertEqual(ids, retr_ids)
+
+    def test_index(self):
+        res = self.testapp.get(self.index_url, status=200)
+        res2 = self.testapp.get(self.index_url + '?tiny=true', status=200)
+        self.assertNotEqual(res.body, res2.body)
+
 
 

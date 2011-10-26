@@ -180,5 +180,6 @@ class ImageHandler(BaseHandler):
 
     @action(renderer='/admin/imagemanager/template.mako')
     def index(self):
-        c.tiny = True if "tiny" in request.params else False
-        return render("%s/%s/%s" % ("admin", "imagemanager", "template.mako"))
+        self.request.template_helper.rendering_type = 'static'
+        tiny = True if "tiny" in self.request.params else False
+        return dict(tiny=tiny)
