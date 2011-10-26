@@ -150,9 +150,6 @@ class ImageHandler(BaseHandler):
         try:
             id_ = int(self.request.params['id'])
             image = Image.get(self.session, id_)
-            if len(image.get_ref_pages(self.session)) > 0:
-                raise TypeError("Immagine %d in uso, "
-                                "impossibile rimuoverla" % id)
             image.delete()
 
         except Exception as e:
