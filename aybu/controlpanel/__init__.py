@@ -83,14 +83,14 @@ def add_handlers(config):
                        handler='aybu.controlpanel.handlers.StructureHandler')
     config.add_handler('settings', '/admin/settings/{action}',
                        handler='aybu.controlpanel.handlers.SettingHandler')
-    config.add_handler('views', '/admin/view/{action}',
+    config.add_handler('views', '/admin/views/{action}',
                        handler='aybu.controlpanel.handlers.ViewHandler')
     config.add_handler('banner_logo', '/admin/banner_logo.html',
                        handler='aybu.controlpanel.handlers.AdminHandler',
                        action="banner_logo", request_method='POST')
-    config.add_handler('admin_get', '/admin/admin/{action}.html',
+    config.add_handler('admin', '/admin/{action}.html',
                        handler='aybu.controlpanel.handlers.AdminHandler',
                        request_method='GET')
-    config.add_handler('admin_post', '/admin/admin/{action}',
+    config.add_handler('admin_post', '/admin/{action}',
                        handler='aybu.controlpanel.handlers.AdminHandler',
                        request_method='POST')

@@ -17,6 +17,7 @@ limitations under the License.
 """
 
 import logging
+from aybu.core.models import User
 
 
 class BaseHandler(object):
@@ -25,5 +26,14 @@ class BaseHandler(object):
     def __init__(self, request):
         self.request = request
         self.session = self.request.db_session
+        self.request.template_helper.rendering_type = 'static'
+        self.request.template_helper.section = 'admin'
         self.log = logging.getLogger("%s.%s" % ( self.__class__.__module__,
                                                 self.__class__.__name__))
+        # TODO set language of request from session
+
+    @property
+    def user(self):
+        import warning
+        warning.warn("User is not yet taken from session")
+        return self.session.query(User).first()

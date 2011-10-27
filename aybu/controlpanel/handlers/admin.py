@@ -17,6 +17,8 @@ limitations under the License.
 """
 
 from pyramid_handlers import action
+from aybu.core.models import Language, Page
+from aybu.core.utils.modifiers import urlify
 from . base import BaseHandler
 
 
@@ -25,33 +27,43 @@ __all__ = ['AdminHandler']
 
 class AdminHandler(BaseHandler):
 
+    def __init__(self, request):
+        super(AdminHandler, self).__init__(request)
+        # FIXME: removeme
+        self.request.template_helper.node = self.session.query(Page).first()
+
     @action(renderer='/admin/index.mako')
     def index(self):
-        raise NotImplementedError
+        return dict(page='index')
 
     @action(renderer='/admin/languages.mako')
     def languages(self):
-        raise NotImplementedError
+        return dict(page='languages', languages=Language.all(self.session))
 
     @action(renderer='/admin/password.mako')
     def password(self):
-        raise NotImplementedError
+        # TODO submit form
+        return dict(page='password', success=True,
+                    result_message=None, errors=dict(old_password='',
+                                                     repeat_password=''))
 
     @action(renderer='/admin/images.mako')
     def images(self):
-        raise NotImplementedError
+        tiny = True if "tiny" in self.request.params else False
+        return dict(page='images', tiny=tiny)
 
     @action(renderer='/admin/files.mako')
     def files(self):
-        raise NotImplementedError
+        tiny = True if "tiny" in self.request.params else False
+        return dict(page='files', tiny=tiny)
 
     @action(renderer='/admin/settings.mako')
     def settings(self):
-        raise NotImplementedError
+        return dict(page='settings')
 
     @action(renderer='/admin/structure.mako')
     def structure(self):
-        raise NotImplementedError
+        return dict(page='structure')
 
     @action(renderer='json')
     def page_banners(self):
@@ -65,10 +77,20 @@ class AdminHandler(BaseHandler):
     def banner_logo(self):
         raise NotImplementedError
 
-    @action(renderer='json')
-    def urlfy(self):
-        raise NotImplementedError
+    @action(renderer='json', name="urlfy")
+    def urlify(self):
+        # FIXME change action name to urlify
+        res = dict()
+        name = self.request.params.get('name', '')
+        try:
+            res['name'] = urlify(name)
 
+        except:
+            res['name'] = ''
+            res['success'] = False
 
+        else:
+            res['success'] = True
 
-
+        finally:
+            return res

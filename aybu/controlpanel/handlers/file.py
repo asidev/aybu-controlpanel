@@ -102,6 +102,5 @@ class FileHandler(BaseHandler):
 
     @action(renderer='/admin/filesmanager/template.mako')
     def index(self):
-        self.request.template_helper.rendering_type = 'static'
         tiny = True if "tiny" in self.request.params else False
         return dict(tiny=tiny)
