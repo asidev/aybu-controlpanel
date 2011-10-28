@@ -17,7 +17,9 @@ limitations under the License.
 """
 
 from pyramid_handlers import action
-from aybu.core.models import Language, Page
+from aybu.core.models import (Language,
+                              Page,
+                              Setting)
 from aybu.core.utils.modifiers import urlify
 from . base import BaseHandler
 
@@ -73,9 +75,22 @@ class AdminHandler(BaseHandler):
     def remove_page_banners(self):
         raise NotImplementedError
 
-    @action(renderer='json')
+    @action(renderer='/admin/banner_logo.mako')
     def banner_logo(self):
-        raise NotImplementedError
+        errors = dict()
+        messages = dict()
+
+        for name in ('banner', 'logo'):
+            errors[name] = None
+            messages[name] = None
+            errors['remove_{}'.format(name)] = None
+            messages['remove_{}'.format(name)] = None
+            filename = Setting.get(self.session, name).value
+
+            if self.request.params.get('remove_{}'.format(name), None):
+                pass
+
+        return dict(page='banner_logo', errors=errors, messages=messages)
 
     @action(renderer='json', name="urlfy")
     def urlify(self):

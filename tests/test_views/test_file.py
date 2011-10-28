@@ -60,18 +60,20 @@ class FileHandlerFunctionalTests(FunctionalTestsBase):
 
     def test_create(self):
         # test missing params
-        response = self.testapp.post(self.add_url)
+        response = self.testapp.post(self.add_url, status=200)
         self.assertIn('success', response.json)
         self.assertIn('error', response.json)
         self.assertFalse(response.json['success'])
 
         # test missing name
         response = self.testapp.post(self.add_url,
-                                     upload_files=[('file', self.sample_file)])
+                                     upload_files=[('file', self.sample_file)],
+                                    status=200)
         self.assertFalse(response.json['success'])
 
         # test missing file
-        response = self.testapp.post(self.add_url, params={'name': 'test.txt'})
+        response = self.testapp.post(self.add_url, params={'name': 'test.txt'},
+                                    status=200)
 
         self.assertFalse(response.json['success'])
 
@@ -79,7 +81,8 @@ class FileHandlerFunctionalTests(FunctionalTestsBase):
         # test ok
         response = self.testapp.post(self.add_url,
                                      params=dict(name='testfile.png'),
-                                     upload_files=[('file', self.sample_file)])
+                                     upload_files=[('file', self.sample_file)],
+                                    status=200)
         self.assertTrue(response.json['success'])
         self.assertIn('id', response.json)
 
@@ -94,7 +97,8 @@ class FileHandlerFunctionalTests(FunctionalTestsBase):
                 response = self.testapp.post(self.add_url,
                                              params=dict(name='testfile.png'),
                                              upload_files=[('file',
-                                                            self.sample_image)])
+                                                            self.sample_image)],
+                                            status=200)
                 if not response.json['success']:
                     raise MaxFilesException()
 
@@ -108,32 +112,33 @@ class FileHandlerFunctionalTests(FunctionalTestsBase):
         new_file_id = response.json['id']
 
         # test missing params
-        response = self.testapp.post(self.remove_url, params=dict())
+        response = self.testapp.post(self.remove_url, params=dict(), status=200)
         self.assertFalse(response.json['success'])
         self.assertIn('error', response.json)
 
         # test wrong id
         response = self.testapp.post(self.remove_url,
-                                     params=dict(id=int(new_file_id) + 1))
+                                     params=dict(id=int(new_file_id) + 1),
+                                     status=200)
         self.assertFalse(response.json['success'])
         self.assertIn('error', response.json)
 
         # test remove ok
         response = self.testapp.post(self.remove_url,
-                                     params=dict(id=new_file_id))
+                                     params=dict(id=new_file_id), status=200)
         self.assertTrue(response.json['success'])
         self.assertIn('error', response.json)
         self.assertEqual(response.json['error'], {})
 
         # reassert error, file should not exist anymore
         response = self.testapp.post(self.remove_url,
-                                     params=dict(id=new_file_id))
+                                     params=dict(id=new_file_id), status=200)
         self.assertFalse(response.json['success'])
         self.assertIn('error', response.json)
 
     def test_list(self):
         # assert file list is empty
-        response = self.testapp.get(self.list_url)
+        response = self.testapp.get(self.list_url, status=200)
         self.assertIn('datalen', response.json)
         self.assertIn('data', response.json)
         self.assertEqual(0, response.json['datalen'])
@@ -143,15 +148,17 @@ class FileHandlerFunctionalTests(FunctionalTestsBase):
         ids = []
         res = self.testapp.post(self.add_url,
                                 params=dict(name='testfile.txt'),
-                                upload_files=[('file', self.sample_file)])
+                                upload_files=[('file', self.sample_file)],
+                                status=200)
         ids.append(res.json['id'])
 
         res = self.testapp.post(self.add_url,
                                 params=dict(name='testfile.txt'),
-                                upload_files=[('file', self.sample_file)])
+                                upload_files=[('file', self.sample_file)],
+                                status=200)
         ids.append(res.json['id'])
 
-        response = self.testapp.get(self.list_url)
+        response = self.testapp.get(self.list_url, status=200)
         self.assertIn('datalen', response.json)
         self.assertIn('data', response.json)
         self.assertEqual(2, response.json['datalen'])
