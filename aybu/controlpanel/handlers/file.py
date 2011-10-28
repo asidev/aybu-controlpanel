@@ -70,7 +70,7 @@ class FileHandler(BaseHandler):
             self.session.flush()
 
         except Exception as e:
-            self._handle_exception(e)
+            self.handle_exception(e)
 
         else:
             self.session.commit()
