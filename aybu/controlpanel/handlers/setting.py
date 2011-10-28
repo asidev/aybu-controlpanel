@@ -19,6 +19,7 @@ limitations under the License.
 from aybu.core.models import Setting
 from pyramid_handlers import action
 from . base import BaseHandler
+import copy
 import logging
 
 
@@ -42,7 +43,10 @@ class SettingHandler(BaseHandler):
                                       'setting_type_name',
                                       'ui_administrable'])
 
-    _response = dict(success=True, dataset=[], dataset_len=0, message='',
+    _response = dict(success=None,
+                     dataset=None,
+                     dataset_len=None, 
+                     message=None,
                      metaData=_response_metadata)
 
     @action(renderer='json')
@@ -57,25 +61,39 @@ class SettingHandler(BaseHandler):
             when debug is True.
         """
 
-        response = self._response.copy()
+        response = copy.deepcopy(self._response)
 
         try:
-            start = int(self.request.params.get('start', 0))
-            limit = int(self.request.params.get('limit', 30))
-            sort_by = self.request.params.get('sort', None)
+            start = self.request.params.get('start')
+            start = None if start is None else int(start)
+            limit = self.request.params.get('limit')
+            limit = None if limit is None else int(limit)
+            sort_by = self.request.params.get('sort')
             sort_order = self.request.params.get('dir', 'desc').lower()
 
             debug = Setting.get(self.session, 'debug').value
             response['dataset_len'] = Setting.count(self.session,
                                                     ui_administrable=debug)
 
-            for setting in Setting.list(self.session, ui_administrable=debug,
+            log.debug('Start: %s.', start)
+            log.debug('Limit: %s.', limit)
+            log.debug('Sort by: %s.', sort_by)
+            log.debug('Sort order: %s.', sort_order)
+            log.debug("Setting 'debug': %s.", debug)
+            log.debug("Collection count: %s.", response['dataset_len'])
+
+            response['dataset'] = []
+            for setting in Setting.list(self.session,
+                                        ui_administrable=debug,
                                         limit=limit, start=start,
                                         sort_by=sort_by, sort_order=sort_order):
-
                 response['dataset'].append(setting.to_dict())
 
+            log.debug("Dataset length: %s.", len(response['dataset']))
+
             self.request.response.status = 200
+            response['success'] = True
+            response['message'] = 'Dataset retrieved.'
 
         except ValueError as e:
             self.request.response.status = 400

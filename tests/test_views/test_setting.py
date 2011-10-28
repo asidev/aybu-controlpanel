@@ -24,30 +24,37 @@ log = logging.getLogger(__name__)
 
 class SettingHandlerFunctionalTests(FunctionalTestsBase):
 
-    def test_list_setting(self):
-        response = self.testapp.get('/admin/settings/list', status=200)
-        response = response.json
-        dataset_len = len(response['dataset'])
-        self.failUnless('success' in response)
-        self.failUnless('metaData' in response)
-        self.failUnless(response['success'] == True)
-        self.assertEqual(dataset_len, response['dataset_len'])
+    def json_get(self, url, status):
+        return self.testapp.get(url, status=status).json
 
-        response = self.testapp.get('/admin/settings/list?start=0&limit=1',
-                                    status=200)
-        response = response.json
-        self.failUnless('success' in response)
-        self.failUnless('metaData' in response)
-        self.assertEqual(response['success'], True)
-        self.assertEqual(response['dataset_len'], dataset_len)
+    def base_assert(self, data):
+        self.assertIn('success', data)
+        self.assertIn('message', data)
+        self.assertIn('metaData', data)
+
+    def success_assert(self, data):
+        self.base_assert(data)
+        self.assertEqual(data['success'], True)
+
+    def test_list_setting(self):
+
+        response = self.json_get(url='/admin/settings/list', status=200)
+        self.success_assert(response)
+        self.assertEqual(len(response['dataset']), response['dataset_len'])
+
+        # Save the length of dataset when no variables specified:
+        # it is needed to jump forward/backward in the collection.
+        # Example scenario: ExtJS paginator widget.
+        collection_length = response['dataset_len']
+
+        response = self.json_get('/admin/settings/list?start=0&limit=1',
+                                 status=200)
+        self.success_assert(response)
+        self.assertEqual(response['dataset_len'], collection_length)
         self.assertEqual(len(response['dataset']), 1)
 
-        response = self.testapp.get('/admin/settings/list?sort=name&dir=desc',
-                                    status=200)
-        response = response.json
-        self.failUnless('success' in response)
-        self.failUnless('metaData' in response)
-        self.assertEqual(response['success'], True)
-        self.assertEqual(response['dataset_len'], dataset_len)
-        log.debug(response)
-        self.assertEqual(len(response['dataset']), response['dataset_len'])
+        response = self.json_get('/admin/settings/list?sort=name&dir=desc',
+                                 status=200)
+        self.success_assert(response)
+        self.assertEqual(response['dataset_len'], collection_length)
+        self.assertEqual(len(response['dataset']), collection_length)
