@@ -101,7 +101,8 @@ class FileHandlerFunctionalTests(FunctionalTestsBase):
     def test_delete(self):
         response = self.testapp.post(self.add_url,
                                      params=dict(name='testfile.png'),
-                                     upload_files=[('file', self.sample_file)])
+                                     upload_files=[('file', self.sample_file)],
+                                     status=200)
 
 
         new_file_id = response.json['id']

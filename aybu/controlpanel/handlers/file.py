@@ -17,7 +17,7 @@ limitations under the License.
 """
 
 from pyramid_handlers import action
-from aybu.core.models import (Setting, File)
+from aybu.core.models import File
 from . base import BaseHandler
 
 
@@ -30,7 +30,7 @@ class FileHandler(BaseHandler):
         super(FileHandler, self).__init__(request)
         self.res = dict(success=True, error=dict())
 
-    def _handle_exception(self, e, fname=""):
+    def handle_exception(self, e, fname=""):
         self.log.exception("Error in %s", fname)
         self.res['success'] = False
         self.res["error"] = {
@@ -40,18 +40,6 @@ class FileHandler(BaseHandler):
 
     @action(renderer='json', name='add')
     def create(self):
-        num_files = File.count(session=self.session)
-        max_files = Setting.get(self.session, 'max_files').value
-        self.log.debug("Current files: %d, max: %d", num_files, max_files)
-        if max_files > 0 and num_files >= max_files:
-            self.res['success'] = False
-            self.res["error"] = self.request.translate(
-                u"Hai raggiunto il numero massimo di file acquistati.")
-            return self.res
-
-        # TODO
-        # Check if disk space is reach
-
         try:
             name = self.request.params['name']
             up_file = self.request.POST['file']
@@ -59,7 +47,7 @@ class FileHandler(BaseHandler):
             self.session.flush()
 
         except Exception as e:
-            self._handle_exception(e)
+            self.handle_exception(e)
 
         else:
             self.session.commit()

@@ -45,25 +45,18 @@ class ImageHandler(BaseHandler):
     # FIXME: actions is add: change to create in calling code
     @action(renderer='json', name='add')
     def create(self):
-        num_images = Image.count(self.session)
-        max_images = Setting.get(self.session, 'max_images').value
-        if max_images > 0 and max_images <= num_images:
-            self.res['success'] = False
-            self.res["error"] = self.request.translate(
-                u"Hai raggiunto il numero massimo di immagini acquistate.")
-            return self.res
-
         try:
             name = self.request.params['name']
             up_file = self.request.POST['file']
             image = Image(source=up_file.file, name=name, session=self.session)
+            self.session.flush()
 
         except Exception as e:
             self.handle_exception(e)
 
         else:
             self.session.commit()
-            self.res['id'] = image.id
+            self.res.update(image.to_dict())
             self.res['success'] = True
             # this should not be needed, but for safety we purge
             # the url in proxy anyway
