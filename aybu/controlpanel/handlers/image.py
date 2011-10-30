@@ -16,12 +16,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from BeautifulSoup import BeautifulSoup
 from pyramid_handlers import action
 from sqlalchemy.orm.exc import NoResultFound
-from aybu.controlpanel.libs.htmlmodifier import update_img_src
-from aybu.core.models import (Image,
-                              Setting)
+from aybu.core.models import Image
 from . base import BaseHandler
 
 
@@ -90,14 +87,6 @@ class ImageHandler(BaseHandler):
 
                     old_name = image.name
                     image.name = name
-                    self.log.debug("Updating src of img tag "
-                              "on translations using the image")
-
-                    translations = image.get_ref_pages(self.session)
-                    for t in translations:
-                        soup = BeautifulSoup(t.html, smartQuotesTo=None)
-                        soup = update_img_src(image.id, old_name, name, soup)
-                        t.html = unicode(soup)
 
             if 'file' in self.request.POST:
                 self.log.debug("Updating file for image %s", image)
