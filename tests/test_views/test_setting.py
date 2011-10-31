@@ -36,7 +36,7 @@ class SettingHandlerFunctionalTests(FunctionalTestsBase):
         self.base_assert(data)
         self.assertEqual(data['success'], True)
 
-    def test_list_setting(self):
+    def test_list(self):
 
         response = self.json_get(url='/admin/settings/list', status=200)
         self.success_assert(response)
@@ -58,3 +58,37 @@ class SettingHandlerFunctionalTests(FunctionalTestsBase):
         self.success_assert(response)
         self.assertEqual(response['dataset_len'], collection_length)
         self.assertEqual(len(response['dataset']), collection_length)
+
+    def test_update(self):
+
+        url = '/admin/settings/update?dataset={"name":"debug", "value":"on"}'
+        response = self.json_get(url=url, status=200)
+        self.assertIn('success', response)
+        self.assertIn('errors', response)
+        self.assertEqual(response['success'], True)
+        self.assertEqual(response['errors'], {})
+
+        url = '/admin/settings/update?name=debug&value=on'
+        response = self.json_get(url=url, status=200)
+        self.assertIn('success', response)
+        self.assertIn('errors', response)
+        self.assertEqual(response['success'], True)
+        self.assertEqual(response['errors'], {})
+
+        url = '/admin/settings/update'
+        response = self.json_get(url=url, status=400)
+        self.assertIn('success', response)
+        self.assertIn('errors', response)
+        self.assertEqual(response['success'], False)
+        self.assertNotEqual(response['errors'], {})
+
+    def test_info(self):
+
+        url = '/admin/settings/info?name=debug'
+        response = self.json_get(url=url, status=200)
+        self.success_assert(response)
+
+        url = '/admin/settings/info'
+        response = self.json_get(url=url, status=400)
+        self.base_assert(response)
+        self.assertEqual(response['success'], False)

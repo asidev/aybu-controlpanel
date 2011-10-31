@@ -16,10 +16,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from aybu.core.htmlmodifier import remove_target
 from aybu.core.models import Setting
+from BeautifulSoup import BeautifulSoup
 from pyramid_handlers import action
+from sqlalchemy.orm.exc import NoResultFound
 from . base import BaseHandler
 import copy
+import json
 import logging
 
 
@@ -51,7 +55,71 @@ class SettingHandler(BaseHandler):
 
     @action(renderer='json')
     def update(self):
-        raise NotImplementedError
+
+        response = copy.deepcopy(self._response)
+        response.pop('dataset')
+        response.pop('dataset_len')
+        response.pop('metaData')
+        response.pop('message')
+        response['errors'] = {}
+
+        try:
+            setting = json.loads(self.request.params['dataset'])
+
+        except KeyError as e:
+            log.exception('Unable to load JSON request.')
+            setting = dict(name=self.request.params.get('name'),
+                           value=self.request.params.get('value'))
+
+        except (TypeError, ValueError) as e:
+            self.session.rollback()
+            log.exception('Bad request.')
+            response['success'] = False
+            response['errors']['exception'] = e
+            self.request.response.status = 400
+
+        try:
+            value = setting['value']
+            setting = Setting.get(self.session, setting['name'])
+
+            if setting.type.raw_type == 'bool' and value == 'on':
+                value = 'True'
+
+            elif setting.type.raw_type == 'bool':
+                value = 'False'
+
+            elif self.settings_proxy.getobj(name).raw_type == 'html':
+                # add smartquotes to prevent bsoup from translating smart-quotes
+                # and other windows-specific characters
+                value = remove_target(BeautifulSoup(value, smartQuotesTo=None))
+                value = unicode(value)
+
+            setting.value = value
+            self.session.flush()
+
+            #FIXME: ??? 
+            #aybu.cms.lib.cache.pages.clear()
+
+        except (NoResultFound, TypeError) as e:
+            log.exception('No setting found.')
+            self.session.rollback()
+            response['success'] = False
+            response['errors']['exception'] = str(e)
+            self.request.response.status = 400
+
+        except Exception as e:
+            log.exception('Cannot update the setting')
+            self.session.rollback()
+            response['success'] = False
+            response['errors']['exception'] = str(e)
+            self.request.response.status = 500
+
+        else:
+            response['success'] = True
+            self.request.response.status = 200
+            self.session.commit()
+
+        return response
 
     @action(renderer='json')
     def list(self):
@@ -111,9 +179,77 @@ class SettingHandler(BaseHandler):
 
     @action(renderer='json')
     def info(self):
-        raise NotImplementedError
+        """ Get details of setting 'name'.
+        """
+        response = copy.deepcopy(self._response)
+
+        try:
+            setting = Setting.get(self.session, self.request.params.get('name'))
+
+        except (NoResultFound, TypeError) as e:
+            log.exception('No setting found.')
+            self.session.rollback()
+            response['dataset'] = []
+            response['dataset_len'] = 0
+            response['success'] = False
+            response['message'] = str(e)
+            self.request.response.status = 400
+
+        except Exception as e:
+            log.exception('Unknown error.')
+            self.session.rollback()
+            response['dataset'] = []
+            response['dataset_len'] = 0
+            response['success'] = False
+            response['message'] = str(e)
+            self.request.response.status = 500
+
+        else:
+            response['dataset'] = [setting.to_dict()]
+            response['dataset_len'] = 1
+            response['success'] = True
+            response['message'] = 'Setting retrieved successfully.'
+            self.request.response.status = 200
+
+        return response
 
     @action(renderer='json')
     def types(self):
-        raise NotImplementedError
 
+        def __get_metadata():
+            return {
+                "root": "dataset",
+                "totalProperty": "dataset_len",
+                "idProperty": "name",
+                "successProperty": "success",
+                "fields": [
+                    'name'
+                ]
+            }
+
+        try:
+            q = SettingType.query
+            setting_types = q.all()
+
+            res = {self.root: [], self.total_property: len(setting_types)}
+
+            for setting_type in setting_types:
+
+                view_dict = {
+                    'name': setting_type.name
+                }
+
+                res[self.root].append(view_dict)
+
+                res['metaData'] = __get_metadata()
+
+                response.status = 200
+                res['success'] = True
+
+        except Exception as e:
+            log.exception(e)
+            response.status = 500
+            return {"success": False, self.root: [],
+                    self.total_property: 0, "message": e}
+
+        return res
