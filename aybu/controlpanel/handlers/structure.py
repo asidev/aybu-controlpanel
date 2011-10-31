@@ -23,7 +23,9 @@ from aybu.core.models import (Language,
                               InternalLink,
                               Page)
 from pyramid_handlers import action
+from sqlalchemy.orm.exc import NoResultFound
 from . base import BaseHandler
+import copy
 import logging
 
 
@@ -33,6 +35,18 @@ log = logging.getLogger(__name__)
 
 
 class StructureHandler(BaseHandler):
+   
+    _response_metadata = dict(root='dataset',
+                              totalProperty='dataset_len',
+                              idProperty='id',
+                              successProperty='success',
+                              fields=['id', 'button_label'])
+
+    _response = dict(success=None,
+                     dataset=None,
+                     dataset_len=None, 
+                     message=None,
+                     metaData=_response_metadata)
 
     @action(renderer='json')
     def tree(self):
@@ -78,11 +92,70 @@ class StructureHandler(BaseHandler):
 
     @action(renderer='json')
     def list(self):
-        raise NotImplementedError
+
+        response = copy.deepcopy(self._response)
+
+        try:
+            # FIXME: add beaker session.
+            # language = Language.get(self.session, client_session['lang'].id)
+            language = Language.get(self.session, 1)
+
+            response['dataset'] = [page.to_dict(language, recursive=False)
+                                   for page in Page.all(self.session)]
+            response['dataset_len'] = len(response['dataset'])
+
+        except NoResultFound as e:
+            log.exception('No language found.')
+            self.request.response.status = 500
+            response['dataset'] = []
+            response['dataset_len'] = 0
+            response['success'] = False
+            response['message'] = str(e)
+
+        else:
+            self.request.response.status = 200
+            response['success'] = True
+            response['message'] = 'Page list retrieved.'
+
+        return response
+
 
     @action(renderer='json')
     def info(self):
-        raise NotImplementedError
+
+        response = copy.deepcopy(self._response)
+
+        try:
+            # FIXME: add beaker session.
+            # language = Language.get(self.session, client_session['lang'].id)
+            language = Language.get(self.session, 1)
+            node = Node.get(self.session, int(self.request.params.get('id')))
+            translation = node.get_translation(language)
+
+        except (NoResultFound, TypeError, ValueError) as e:
+            log.exception("Bad request.")
+            response['data'] = None
+            response['datalen'] = 0
+            response['success'] = False
+            response['message'] = str(e)
+            self.request.response.status = 400
+
+        except Exception as e:
+            log.exception('Unknown error.')
+            response['data'] = None
+            response['datalen'] = 0
+            response['success'] = False
+            response['message'] = str(e)
+            self.request.response.status = 500
+
+        else:
+            response['data'] = translation.to_dict()
+            response['datalen'] = 1
+            response['success'] = True
+            response['message'] = 'Information retrieved.'
+            self.request.response.status = 200
+
+        return response
 
     @action(renderer='json')
     def create(self):

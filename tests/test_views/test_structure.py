@@ -27,6 +27,15 @@ class StructuregHandlerFunctionalTests(FunctionalTestsBase):
     def json_get(self, url, status):
         return self.testapp.get(url, status=status).json
 
+    def base_assert(self, data):
+        self.assertIn('success', data)
+        self.assertIn('message', data)
+        self.assertIn('metaData', data)
+
+    def success_assert(self, data):
+        self.base_assert(data)
+        self.assertEqual(data['success'], True)
+
     def test_tree(self):
         response = self.json_get(url='/admin/structure/tree.html', status=200)
         self.assertNotEqual(len(response), 0)
@@ -35,3 +44,18 @@ class StructuregHandlerFunctionalTests(FunctionalTestsBase):
         response = self.testapp.get(url='/admin/structure/link_list.html', 
                                     status=200)
         self.assertNotEqual(response, '')
+
+    def test_list(self):
+        response = self.json_get(url='/admin/structure/list.html', 
+                                 status=200)
+        self.success_assert(response)
+
+    def test_info(self):
+        response = self.json_get(url='/admin/structure/info.html', 
+                                 status=400)
+        self.base_assert(response)
+        self.assertEqual(response['success'], False)
+
+        response = self.json_get(url='/admin/structure/info.html?id=1',
+                                 status=200)
+        self.success_assert(response)
