@@ -16,7 +16,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from aybu.core.models import Page
 from pyramid_handlers import action
+from pyramid.httpexceptions import HTTPFound
 from . base import BaseHandler
 
 
@@ -24,15 +26,19 @@ __all__ = ['LoginHandler']
 
 
 class LoginHandler(BaseHandler):
+    def __init__(self, request):
+        super(LoginHandler, self).__init__(request)
+        # FIXME: removeme
+        self.request.template_helper.node = self.session.query(Page).first()
 
     @action(renderer='/admin/login.mako')
     def show(self):
-        raise NotImplementedError
+        return dict(page='login', message=None)
 
     @action()
     def login(self):
-        raise NotImplementedError
+        return HTTPFound(location=self.request.route_url('admin', action="index"))
 
     @action()
     def logout(self):
-        raise NotImplementedError
+        return HTTPFound(location="/")
