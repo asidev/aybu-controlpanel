@@ -61,11 +61,6 @@ class FileHandler(BaseHandler):
         try:
             id_ = int(self.request.params['id'])
             obj = File.get(self.session, id_)
-            if len(obj.get_ref_pages(self.session)) > 0:
-                error = self.request.translate("File in uso, impossibile"
-                                               " rimuoverlo")
-                raise TypeError(error)
-
             obj.delete()
             self.session.flush()
 
