@@ -18,7 +18,10 @@ limitations under the License.
 
 from pyramid_handlers import action
 from aybu.core.models import (Language,
+                              PageInfo,
                               Page,
+                              Banner,
+                              Logo,
                               Setting)
 from aybu.core.utils.modifiers import urlify
 from . base import BaseHandler
@@ -69,25 +72,104 @@ class AdminHandler(BaseHandler):
 
     @action(renderer='json')
     def page_banners(self):
-        raise NotImplementedError
+        res = dict(success=False)
+        try:
+            name = self.request.params['name']
+            id_ = self.request.params['nodeinfo_id']
+            source = self.request.params['file']
+            info = PageInfo.get(self.session, id_)
+            self.log.debug("Updating banner for page '{}'".format(info.label))
+            for banner in info.page.banners:
+                banner.delete()
+            info.page.banners = []
+
+            info.page.banners.append(
+                Banner(source=source.file, name=name, session=self.session)
+            )
+            self.session.flush()
+
+        except Exception:
+            self.session.rollback()
+            message = u"Errore nella rimozione del banner"
+            res['success'] = False
+            res['error'] = self.request.translate(message)
+            self.log.exception("Error removing banner")
+
+        else:
+            self.session.commit()
+            # TODO: flush cache for page
+
+        finally:
+            return res
 
     @action(renderer='json')
     def remove_page_banners(self):
-        raise NotImplementedError
+        res = dict(success=False)
+        try:
+            info = PageInfo.get(self.session,
+                                self.request.params['nodeinfo_id'])
+            for banner in info.page.banners:
+                banner.delete()
+
+            self.session.flush()
+
+        except Exception:
+            self.session.rollback()
+            message = u"Errore nella rimozione del banner"
+            res['success'] = False
+            res['error'] = self.request.translate(message)
+            self.log.exception("Error removing banner")
+
+        else:
+            self.session.commit()
+            # TODO: flush cache for page
+
+        finally:
+            return res
 
     @action(renderer='/admin/banner_logo.mako')
     def banner_logo(self):
         errors = dict()
         messages = dict()
+        purge_all = False
 
         for name in ('banner', 'logo'):
             errors[name] = None
             messages[name] = None
-            errors['remove_{}'.format(name)] = None
-            messages['remove_{}'.format(name)] = None
-            filename = Setting.get(self.session, name).value
+            cls = globals()[name.title()]
 
-            if self.request.params.get('remove_{}'.format(name), None):
+            # handle delete first
+            key = 'remove_{}'.format(name)
+            errors[key] = None
+            messages[key] = None
+
+            if self.request.params.get(key, None):
+                obj = cls.get_default(self.session)
+                if obj:
+                    obj.delete()
+                    purge_all = True
+                message = u'{} rimosso con successo'.format(name.title())
+                messages[key] = self.request.translate(message)
+
+            # handle upload
+            key = '{}_image'.format(name)
+            source = self.request.params.get(key, None)
+            if source:
+                filename = Setting.get(self.session, name).value
+                try:
+                    cls(name=filename, source=source.file, session=self.session)
+                    message = u'{} aggiornato con successo'.format(name.title())
+                    purge_all = True
+
+                except Exception:
+                    message = u"{}: errore nell'aggiornamento"\
+                                    .format(name.title())
+
+                finally:
+                    messages[key] = self.request.translate(message)
+
+            if purge_all:
+                # TODO flush all pages from proxy
                 pass
 
         return dict(page='banner_logo', errors=errors, messages=messages)
