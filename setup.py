@@ -49,12 +49,13 @@ test_suite = 'tests'
 entry_points = """\
 [paste.app_factory]
     main = aybu.controlpanel:main
+[paste.paster_command]
+    aybu-setup = aybu.core.utils.command:SetupApp
+    uwsgi = pasteuwsgi.serve:ServeCommand
 """
 
 paster_plugins = ['pyramid']
-
 namespace_packages = ['aybu']
-
 message_extractors = {
     '.': [
         ('**.py',   'lingua_python', None ),
