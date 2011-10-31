@@ -6,3 +6,4 @@ syntax: glob
 ./dist
 ./aybu_controlpanel.egg-info
 *.orig
+./versiontools*
