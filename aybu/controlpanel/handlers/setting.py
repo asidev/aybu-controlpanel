@@ -18,6 +18,7 @@ limitations under the License.
 
 from aybu.core.htmlmodifier import remove_target
 from aybu.core.models import Setting
+from aybu.core.models import SettingType
 from BeautifulSoup import BeautifulSoup
 from pyramid_handlers import action
 from sqlalchemy.orm.exc import NoResultFound
@@ -215,41 +216,26 @@ class SettingHandler(BaseHandler):
 
     @action(renderer='json')
     def types(self):
-
-        def __get_metadata():
-            return {
-                "root": "dataset",
-                "totalProperty": "dataset_len",
-                "idProperty": "name",
-                "successProperty": "success",
-                "fields": [
-                    'name'
-                ]
-            }
+        """ List settings types in the database.
+        """
+        response = copy.deepcopy(self._response)
+        response['metaData']['idProperty'] = 'name'
+        response['metaData']['fields'] = ['name', 'raw_type']
 
         try:
-            q = SettingType.query
-            setting_types = q.all()
-
-            res = {self.root: [], self.total_property: len(setting_types)}
-
-            for setting_type in setting_types:
-
-                view_dict = {
-                    'name': setting_type.name
-                }
-
-                res[self.root].append(view_dict)
-
-                res['metaData'] = __get_metadata()
-
-                response.status = 200
-                res['success'] = True
+            response['dataset'] = [type_.to_dict()
+                                   for type_ in SettingType.all(self.session)]
+            response['dataset_len'] = len(response['dataset'])
+            response['success'] = True
+            response['message'] = 'SettingType collection retrieved.'
+            self.request.response.status = 200
 
         except Exception as e:
             log.exception(e)
-            response.status = 500
-            return {"success": False, self.root: [],
-                    self.total_property: 0, "message": e}
+            response['dataset'] = []
+            response['dataset_len'] = 0
+            response['success'] = False
+            response['message'] = str(e)
+            self.request.response.status = 500
 
-        return res
+        return response

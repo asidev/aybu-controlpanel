@@ -92,3 +92,9 @@ class SettingHandlerFunctionalTests(FunctionalTestsBase):
         response = self.json_get(url=url, status=400)
         self.base_assert(response)
         self.assertEqual(response['success'], False)
+
+    def test_info(self):
+
+        url = '/admin/settings/types'
+        response = self.json_get(url=url, status=200)
+        self.success_assert(response)
