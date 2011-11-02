@@ -19,7 +19,7 @@ limitations under the License.
 import json
 from pyramid_handlers import action
 from . base import BaseHandler
-from aybu.controlpanel.libs.spellchecking import SpellChecker
+from aybu.core.utils.spellchecking import SpellChecker
 
 
 __all__ = ['ContentHandler']
