@@ -7,3 +7,4 @@ syntax: glob
 ./aybu_controlpanel.egg-info
 *.orig
 ./versiontools*
+./data/sessions

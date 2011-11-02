@@ -21,6 +21,7 @@ from aybu.core.models import Setting
 from aybu.core.models import SettingType
 from BeautifulSoup import BeautifulSoup
 from pyramid_handlers import action
+import pyramid.security
 from sqlalchemy.orm.exc import NoResultFound
 from . base import BaseHandler
 import copy
@@ -50,11 +51,12 @@ class SettingHandler(BaseHandler):
 
     _response = dict(success=None,
                      dataset=None,
-                     dataset_len=None, 
+                     dataset_len=None,
                      message=None,
                      metaData=_response_metadata)
 
-    @action(renderer='json')
+    @action(renderer='json',
+           permission=pyramid.security.ALL_PERMISSIONS)
     def update(self):
 
         response = copy.deepcopy(self._response)
@@ -98,7 +100,7 @@ class SettingHandler(BaseHandler):
             setting.value = value
             self.session.flush()
 
-            #FIXME: ??? 
+            #FIXME: ???
             #aybu.cms.lib.cache.pages.clear()
 
         except (NoResultFound, TypeError) as e:
@@ -122,11 +124,12 @@ class SettingHandler(BaseHandler):
 
         return response
 
-    @action(renderer='json')
+    @action(renderer='json',
+           permission=pyramid.security.ALL_PERMISSIONS)
     def list(self):
         """ List settings in the database.
             Result set can be ordered and/or paginated.
-            Result set is filtered by Setting.ui_administrable 
+            Result set is filtered by Setting.ui_administrable
             when debug is True.
         """
 
@@ -178,7 +181,8 @@ class SettingHandler(BaseHandler):
 
         return response
 
-    @action(renderer='json')
+    @action(renderer='json',
+           permission=pyramid.security.ALL_PERMISSIONS)
     def info(self):
         """ Get details of setting 'name'.
         """
@@ -214,7 +218,8 @@ class SettingHandler(BaseHandler):
 
         return response
 
-    @action(renderer='json')
+    @action(renderer='json',
+           permission=pyramid.security.ALL_PERMISSIONS)
     def types(self):
         """ List settings types in the database.
         """

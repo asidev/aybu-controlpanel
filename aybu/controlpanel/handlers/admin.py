@@ -16,11 +16,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import pyramid.security
 from pyramid_handlers import action
 from aybu.core.models import (Language,
                               PageInfo,
                               Page,
                               Banner,
+                              User,
                               Logo,
                               Setting)
 from aybu.core.utils.modifiers import urlify
@@ -37,40 +39,79 @@ class AdminHandler(BaseHandler):
         # FIXME: removeme
         self.request.template_helper.node = self.session.query(Page).first()
 
-    @action(renderer='/admin/index.mako')
+    @action(renderer='/admin/index.mako',
+            permission=pyramid.security.ALL_PERMISSIONS)
     def index(self):
         return dict(page='index')
 
-    @action(renderer='/admin/languages.mako')
+    @action(renderer='/admin/languages.mako',
+            permission=pyramid.security.ALL_PERMISSIONS)
     def languages(self):
         return dict(page='languages', languages=Language.all(self.session))
 
-    @action(renderer='/admin/password.mako')
+    @action(renderer='/admin/password.mako',
+            permission=pyramid.security.ALL_PERMISSIONS)
     def password(self):
-        # TODO submit form
-        return dict(page='password', success=True,
+        res = dict(page='password', success=True,
                     result_message=None, errors=dict(old_password='',
                                                      repeat_password=''))
 
-    @action(renderer='/admin/images.mako')
+        if not self.request.params.get('submit'):
+           return res
+
+        res['success'] = False
+        try:
+            User.check(self.request.session,
+                       self.request.username,
+                       self.request.params['old_password'])
+        except ValueError:
+            msg = self.request.translate(u'Vecchia password non corretta')
+            res['errors']['old_password'] = msg
+
+        new = self.request.params.get('new_password', '')
+        rep = self.request.params.get('repeat_password', '')
+        if new != rep:
+            msg = self.request.translate(u'Le password non coincidono')
+            res['errors']['repeat_password'] = msg
+
+        elif len(new) < 6:
+            msg = u'La password deve essere di almeno 6 caratteri'
+            msg = self.request.translate(msg)
+            res['errors']['repeat_password'] = msg
+
+        else:
+            self.request.user.password = new
+            self.session.commit()
+            res['success'] = True
+            msg = self.request.translate(u'Password aggiornata')
+            res['result_message'] = msg
+
+        return res
+
+    @action(renderer='/admin/images.mako',
+            permission=pyramid.security.ALL_PERMISSIONS)
     def images(self):
         tiny = True if "tiny" in self.request.params else False
         return dict(page='images', tiny=tiny)
 
-    @action(renderer='/admin/files.mako')
+    @action(renderer='/admin/files.mako',
+            permission=pyramid.security.ALL_PERMISSIONS)
     def files(self):
         tiny = True if "tiny" in self.request.params else False
         return dict(page='files', tiny=tiny)
 
-    @action(renderer='/admin/settings.mako')
+    @action(renderer='/admin/settings.mako',
+            permission=pyramid.security.ALL_PERMISSIONS)
     def settings(self):
         return dict(page='settings')
 
-    @action(renderer='/admin/structure.mako')
+    @action(renderer='/admin/structure.mako',
+            permission=pyramid.security.ALL_PERMISSIONS)
     def structure(self):
         return dict(page='structure')
 
-    @action(renderer='json')
+    @action(renderer='json',
+            permission=pyramid.security.ALL_PERMISSIONS)
     def page_banners(self):
         res = dict(success=False)
         try:
@@ -102,7 +143,8 @@ class AdminHandler(BaseHandler):
         finally:
             return res
 
-    @action(renderer='json')
+    @action(renderer='json',
+            permission=pyramid.security.ALL_PERMISSIONS)
     def remove_page_banners(self):
         res = dict(success=False)
         try:
@@ -127,7 +169,8 @@ class AdminHandler(BaseHandler):
         finally:
             return res
 
-    @action(renderer='/admin/banner_logo.mako')
+    @action(renderer='/admin/banner_logo.mako',
+            permission=pyramid.security.ALL_PERMISSIONS)
     def banner_logo(self):
         errors = dict()
         messages = dict()
@@ -174,7 +217,8 @@ class AdminHandler(BaseHandler):
 
         return dict(page='banner_logo', errors=errors, messages=messages)
 
-    @action(renderer='json', name="urlfy")
+    @action(renderer='json', name="urlfy",
+            permission=pyramid.security.ALL_PERMISSIONS)
     def urlify(self):
         # FIXME change action name to urlify
         res = dict()

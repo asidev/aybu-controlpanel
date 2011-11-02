@@ -48,6 +48,8 @@ class FunctionalTestsBase(unittest.TestCase):
 
         # Step 2: load default data
         default_data = parser.get(section, 'default_data')
+        self.username = parser.get(section, 'default_user.username')
+        self.password = parser.get(section, 'default_user.password')
         databag = os.path.realpath(os.path.join(os.path.dirname(config),
                                                 os.path.dirname(default_data),
                                                 os.path.basename(default_data)))
@@ -68,6 +70,15 @@ class FunctionalTestsBase(unittest.TestCase):
                     for opt in parser.options(section)}
         app = main({}, **settings)
         self.testapp = TestApp(app)
+        self.login()
+
+    def login(self):
+        params = dict(submit='yes',
+                      username=self.username,
+                      password=self.password)
+        response = self.testapp.post('/admin/login.html',
+                                     params)
+        response = response.follow(status=200)
 
     def tearDown(self):
         Session.close_all()

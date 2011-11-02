@@ -18,6 +18,7 @@ limitations under the License.
 
 from aybu.core.models import Language, View
 from pyramid_handlers import action
+import pyramid.security
 from . base import BaseHandler
 import logging
 
@@ -70,7 +71,8 @@ class ViewHandler(BaseHandler):
 
         return items
 
-    @action(renderer='json')
+    @action(renderer='json',
+            permission=pyramid.security.ALL_PERMISSIONS)
     def list(self):
 
         response = self._response.copy()

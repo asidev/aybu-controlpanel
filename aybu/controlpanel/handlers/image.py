@@ -20,6 +20,7 @@ from pyramid_handlers import action
 from sqlalchemy.orm.exc import NoResultFound
 from aybu.core.models import Image
 from . base import BaseHandler
+import pyramid.security
 
 
 __all__ = ['ImageHandler']
@@ -40,7 +41,8 @@ class ImageHandler(BaseHandler):
         )
 
     # FIXME: actions is add: change to create in calling code
-    @action(renderer='json', name='add')
+    @action(renderer='json', name='add',
+           permission=pyramid.security.ALL_PERMISSIONS)
     def create(self):
         try:
             name = self.request.params['name']
@@ -63,7 +65,8 @@ class ImageHandler(BaseHandler):
         finally:
             return self.res
 
-    @action(renderer='json')
+    @action(renderer='json',
+           permission=pyramid.security.ALL_PERMISSIONS)
     def update(self):
         try:
             self.res['errors'] = dict()
@@ -127,7 +130,8 @@ class ImageHandler(BaseHandler):
         finally:
             return self.res
 
-    @action(renderer='json')
+    @action(renderer='json',
+           permission=pyramid.security.ALL_PERMISSIONS)
     def remove(self):
         try:
             id_ = int(self.request.params['id'])
@@ -146,7 +150,8 @@ class ImageHandler(BaseHandler):
         finally:
             return self.res
 
-    @action(renderer='json')
+    @action(renderer='json',
+           permission=pyramid.security.ALL_PERMISSIONS)
     def list(self):
         count = Image.count(self.session)
         self.res = {"datalen": count}
@@ -157,7 +162,8 @@ class ImageHandler(BaseHandler):
 
         return self.res
 
-    @action(renderer='/admin/imagemanager/template.mako')
+    @action(renderer='/admin/imagemanager/template.mako',
+           permission=pyramid.security.ALL_PERMISSIONS)
     def index(self):
         tiny = True if "tiny" in self.request.params else False
         return dict(tiny=tiny)

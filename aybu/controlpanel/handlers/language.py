@@ -20,6 +20,7 @@ from aybu.core.models import Language
 from aybu.core.exc import QuotaError
 from pyramid_handlers import action
 from . base import BaseHandler
+import pyramid.security
 
 
 __all__ = ['LanguageHandler']
@@ -27,7 +28,8 @@ __all__ = ['LanguageHandler']
 
 class LanguageHandler(BaseHandler):
 
-    @action(renderer='json')
+    @action(renderer='json',
+           permission=pyramid.security.ALL_PERMISSIONS)
     def enable(self):
         """
             Enable the language identified by 'lang_id'.
@@ -64,7 +66,8 @@ class LanguageHandler(BaseHandler):
         finally:
             return dict(success=success, msg=msg)
 
-    @action(renderer='json')
+    @action(renderer='json',
+           permission=pyramid.security.ALL_PERMISSIONS)
     def disable(self):
         """
             Disable the language identified by 'lang_id'.

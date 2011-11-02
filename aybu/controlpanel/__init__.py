@@ -16,17 +16,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from aybu.core.authentication import AuthenticationPolicy
 from aybu.core.request import Request
 from aybu.core.models import Base
 import aybu.website
+from aybu.core.authentication import AuthenticationPolicy
 from pyramid.config import Configurator
+from pyramid_beaker import session_factory_from_settings
 from sqlalchemy import engine_from_config
 import logging
 
 
 log = logging.getLogger(__name__)
 __version__ = (0, 1, 0, 'dev', 0)
+
 
 def main(global_config, **settings):
 
@@ -37,9 +39,12 @@ def main(global_config, **settings):
     # It is needed by Request objects to build Session.
     Request.set_db_engine(engine)
 
+    session_factory = session_factory_from_settings(settings)
+    auth_policy = AuthenticationPolicy()
     config = Configurator(settings=settings,
                           request_factory=Request,
-                          authentication_policy=AuthenticationPolicy(settings))
+                          session_factory=session_factory,
+                          authentication_policy=auth_policy)
 
     config.include(includeme)
 
@@ -58,39 +63,55 @@ def includeme(config):
 
 def add_handlers(config):
 
-    config.add_handler('login-render', '/admin/login.html',
+    config.add_handler('login', '/admin/login.html',
                        handler='aybu.controlpanel.handlers.LoginHandler',
-                       action="show")
-    config.add_handler('login-submit', '/admin/login_submit.html',
+                       factory='aybu.core.authentication.Authenticated',
+                       request_method='GET',
+                       action="login")
+    config.add_handler('login_post', '/admin/login.html',
                        handler='aybu.controlpanel.handlers.LoginHandler',
+                       factory='aybu.core.authentication.Authenticated',
+                       request_method='POST',
                        action="login")
     config.add_handler('logout', '/admin/logout',
                        handler='aybu.controlpanel.handlers.LoginHandler',
+                       factory='aybu.core.authentication.Authenticated',
                        action="logout")
     config.add_handler('edit', '/admin/edit',
                        handler="aybu.controlpanel.handlers.ContentHandler",
+                       factory='aybu.core.authentication.Authenticated',
                        action="edit")
     config.add_handler('spellchecker', '/admin/spellchecker.html',
                        handler="aybu.controlpanel.handlers.ContentHandler",
+                       factory='aybu.core.authentication.Authenticated',
                        action="spellcheck")
     config.add_handler('images', '/admin/images/{action}.html',
+                       factory='aybu.core.authentication.Authenticated',
                        handler="aybu.controlpanel.handlers.ImageHandler")
     config.add_handler('files', '/admin/files/{action}.html',
+                       factory='aybu.core.authentication.Authenticated',
                        handler='aybu.controlpanel.handlers.FileHandler')
     config.add_handler('language', '/admin/language/{action}.html',
+                       factory='aybu.core.authentication.Authenticated',
                        handler="aybu.controlpanel.handlers.LanguageHandler")
     config.add_handler('structure', '/admin/structure/{action}.html',
+                       factory='aybu.core.authentication.Authenticated',
                        handler='aybu.controlpanel.handlers.StructureHandler')
     config.add_handler('settings', '/admin/settings/{action}',
+                       factory='aybu.core.authentication.Authenticated',
                        handler='aybu.controlpanel.handlers.SettingHandler')
     config.add_handler('views', '/admin/views/{action}',
+                       factory='aybu.core.authentication.Authenticated',
                        handler='aybu.controlpanel.handlers.ViewHandler')
     config.add_handler('banner_logo', '/admin/banner_logo.html',
                        handler='aybu.controlpanel.handlers.AdminHandler',
+                       factory='aybu.core.authentication.Authenticated',
                        action="banner_logo", request_method='POST')
     config.add_handler('admin', '/admin/{action}.html',
                        handler='aybu.controlpanel.handlers.AdminHandler',
+                       factory='aybu.core.authentication.Authenticated',
                        request_method='GET')
     config.add_handler('admin_post', '/admin/{action}',
                        handler='aybu.controlpanel.handlers.AdminHandler',
+                       factory='aybu.core.authentication.Authenticated',
                        request_method='POST')

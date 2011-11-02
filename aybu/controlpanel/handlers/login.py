@@ -16,10 +16,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from aybu.core.models import Page
+from aybu.core.models import Page, User
 from pyramid_handlers import action
 from pyramid.httpexceptions import HTTPFound
 from . base import BaseHandler
+import pyramid.security
 
 
 __all__ = ['LoginHandler']
@@ -32,13 +33,35 @@ class LoginHandler(BaseHandler):
         self.request.template_helper.node = self.session.query(Page).first()
 
     @action(renderer='/admin/login.mako')
-    def show(self):
-        return dict(page='login', message=None)
-
-    @action()
     def login(self):
-        return HTTPFound(location=self.request.route_url('admin', action="index"))
+        res = dict(message=None, page='login')
+        if self.request.params.get('submit') is None:
+            self.log.debug("User: %s", self.request.user)
+            self.log.debug("Session: %s", self.request.session.keys())
+            if not self.request.user is None:
+                return HTTPFound(location=self.request.route_url('admin',
+                                                                 action='index'))
+            else:
+                return res
 
-    @action()
+        try:
+            username = self.request.params['username']
+            password = self.request.params['password']
+            User.check(self.request.db_session, username, password)
+
+        except:
+            self.log.exception('Invalid Login')
+            message = u'Username o password non validi'
+            res['message'] = self.request.translate(message)
+            self.request.response.status_int = 400
+            return res
+
+        else:
+            pyramid.security.remember(self.request, username)
+            return HTTPFound(location=self.request.route_url('admin',
+                                                             action="index"))
+
+    @action(permission=pyramid.security.ALL_PERMISSIONS)
     def logout(self):
+        pyramid.security.forget(self.request)
         return HTTPFound(location="/")

@@ -20,6 +20,7 @@ import json
 from pyramid_handlers import action
 from . base import BaseHandler
 from aybu.core.utils.spellchecking import SpellChecker
+import pyramid.security
 
 
 __all__ = ['ContentHandler']
@@ -46,11 +47,13 @@ class ContentHandler(BaseHandler):
         self.log.debug("res: %s", res)
         return res
 
-    @action(renderer='json')
+    @action(renderer='json',
+           permission=pyramid.security.ALL_PERMISSIONS)
     def edit(self):
         raise NotImplementedError
 
-    @action(renderer='json')
+    @action(renderer='json',
+           permission=pyramid.security.ALL_PERMISSIONS)
     def spellcheck(self):
         try:
             q = json.loads(self.request.body)

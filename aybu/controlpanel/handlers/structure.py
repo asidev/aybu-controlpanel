@@ -16,13 +16,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from aybu.core.models import (Language, 
+from aybu.core.models import (Language,
                               Menu,
                               Node,
-                              ExternalLink,
-                              InternalLink,
                               Page)
 from pyramid_handlers import action
+import pyramid.security
 from sqlalchemy.orm.exc import NoResultFound
 from . base import BaseHandler
 import copy
@@ -35,7 +34,7 @@ log = logging.getLogger(__name__)
 
 
 class StructureHandler(BaseHandler):
-   
+
     _response_metadata = dict(root='dataset',
                               totalProperty='dataset_len',
                               idProperty='id',
@@ -44,11 +43,12 @@ class StructureHandler(BaseHandler):
 
     _response = dict(success=None,
                      dataset=None,
-                     dataset_len=None, 
+                     dataset_len=None,
                      message=None,
                      metaData=_response_metadata)
 
-    @action(renderer='json')
+    @action(renderer='json',
+            permission=pyramid.security.ALL_PERMISSIONS)
     def tree(self):
         # FIXME: add beaker session.
         # language = Language.get(self.session, client_session['lang'].id)
@@ -56,10 +56,11 @@ class StructureHandler(BaseHandler):
         # FIXME: don't load all database!!!
         # HINT: add parameter 'level' to the request to load first N levels.
         return [node.to_dict(language)
-                for node in Node.all(self.session) 
+                for node in Node.all(self.session)
                 if isinstance(node, Menu) and node.parent == None]
 
-    @action(renderer='string')
+    @action(renderer='string',
+            permission=pyramid.security.ALL_PERMISSIONS)
     def link_list(self):
         """ Return a javascript with tinyMCELinkList array.
         """
@@ -90,7 +91,8 @@ class StructureHandler(BaseHandler):
 
         return response
 
-    @action(renderer='json')
+    @action(renderer='json',
+            permission=pyramid.security.ALL_PERMISSIONS)
     def list(self):
 
         response = copy.deepcopy(self._response)
@@ -120,7 +122,8 @@ class StructureHandler(BaseHandler):
         return response
 
 
-    @action(renderer='json')
+    @action(renderer='json',
+            permission=pyramid.security.ALL_PERMISSIONS)
     def info(self):
 
         response = copy.deepcopy(self._response)
@@ -157,19 +160,23 @@ class StructureHandler(BaseHandler):
 
         return response
 
-    @action(renderer='json')
+    @action(renderer='json',
+            permission=pyramid.security.ALL_PERMISSIONS)
     def create(self):
         raise NotImplementedError
 
-    @action(renderer='json')
+    @action(renderer='json',
+            permission=pyramid.security.ALL_PERMISSIONS)
     def update(self):
         raise NotImplementedError
 
-    @action(renderer='json', name='destroy')
+    @action(renderer='json', name='destroy',
+            permission=pyramid.security.ALL_PERMISSIONS)
     def delete(self):
         raise NotImplementedError
 
-    @action(renderer='json')
+    @action(renderer='json',
+            permission=pyramid.security.ALL_PERMISSIONS)
     def move(self):
         raise NotImplementedError
 

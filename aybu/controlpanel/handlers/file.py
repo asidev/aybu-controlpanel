@@ -19,6 +19,7 @@ limitations under the License.
 from pyramid_handlers import action
 from aybu.core.models import File
 from . base import BaseHandler
+import pyramid.security
 
 
 __all__ = ['FileHandler']
@@ -38,7 +39,8 @@ class FileHandler(BaseHandler):
         }
         self.session.rollback()
 
-    @action(renderer='json', name='add')
+    @action(renderer='json', name='add',
+           permission=pyramid.security.ALL_PERMISSIONS)
     def create(self):
         try:
             name = self.request.params['name']
@@ -56,7 +58,8 @@ class FileHandler(BaseHandler):
         finally:
             return self.res
 
-    @action(renderer='json')
+    @action(renderer='json',
+           permission=pyramid.security.ALL_PERMISSIONS)
     def delete(self):
         try:
             id_ = int(self.request.params['id'])
@@ -73,7 +76,8 @@ class FileHandler(BaseHandler):
         finally:
             return self.res
 
-    @action(renderer='json')
+    @action(renderer='json',
+           permission=pyramid.security.ALL_PERMISSIONS)
     def list(self):
         num_files = File.count(self.session)
         self.res = dict(datalen=num_files, data=[])
@@ -83,7 +87,8 @@ class FileHandler(BaseHandler):
 
         return self.res
 
-    @action(renderer='/admin/filesmanager/template.mako')
+    @action(renderer='/admin/filesmanager/template.mako',
+           permission=pyramid.security.ALL_PERMISSIONS)
     def index(self):
         tiny = True if "tiny" in self.request.params else False
         return dict(tiny=tiny)
