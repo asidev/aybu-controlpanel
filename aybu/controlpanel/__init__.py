@@ -19,6 +19,7 @@ limitations under the License.
 from aybu.core.request import Request
 from aybu.core.models import Base
 import aybu.website
+from aybu.website.resources import get_root_resource
 from aybu.core.authentication import AuthenticationPolicy
 from pyramid.config import Configurator
 from pyramid_beaker import session_factory_from_settings
@@ -115,3 +116,11 @@ def add_handlers(config):
                        handler='aybu.controlpanel.handlers.AdminHandler',
                        factory='aybu.core.authentication.Authenticated',
                        request_method='POST')
+
+    # Put URL dispatch configuration statements before Traversal ones!!!
+    config.add_route('adminpages', '/admin/*traverse',
+                     factory=get_root_resource)
+
+    config.add_view(route_name='adminpages',
+                    context='aybu.core.models.NodeInfo',
+                    view='aybu.website.views.show_page')
