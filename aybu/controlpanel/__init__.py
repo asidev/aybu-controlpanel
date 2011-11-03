@@ -25,6 +25,7 @@ from pyramid.config import Configurator
 from pyramid_beaker import session_factory_from_settings
 from sqlalchemy import engine_from_config
 import logging
+import pyramid.security
 
 
 log = logging.getLogger(__name__)
@@ -123,4 +124,5 @@ def add_handlers(config):
 
     config.add_view(route_name='adminpages',
                     context='aybu.core.models.NodeInfo',
+                    permission=pyramid.security.ALL_PERMISSIONS,
                     view='aybu.website.views.show_page')
