@@ -19,6 +19,7 @@ limitations under the License.
 import json
 from pyramid_handlers import action
 from . base import BaseHandler
+from aybu.core.models import Language
 from aybu.core.utils.spellchecking import SpellChecker
 import pyramid.security
 
@@ -60,10 +61,11 @@ class ContentHandler(BaseHandler):
             id = q["id"]
             method = q['method']
             params = q['params']
-            lang = params[0]
             words = params[1]
-
+            lang = self.request.language
+            self.log.debug("Checking words %s in lang %s", words, lang)
             checker = SpellChecker(lang)
+
             spell_result = getattr(checker, method)(words)
             return self.create_result(id=id, result=spell_result)
 
