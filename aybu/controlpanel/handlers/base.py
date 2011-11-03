@@ -17,7 +17,8 @@ limitations under the License.
 """
 
 import logging
-from aybu.core.models import User
+from pyramid.httpexceptions import HTTPBadRequest
+from aybu.core.models import Language
 
 
 class BaseHandler(object):
@@ -30,10 +31,13 @@ class BaseHandler(object):
         self.request.template_helper.section = 'admin'
         self.log = logging.getLogger("%s.%s" % ( self.__class__.__module__,
                                                 self.__class__.__name__))
-        # TODO set language of request from session
 
-    @property
-    def user(self):
-        import warning
-        warning.warn("User is not yet taken from session")
-        return self.session.query(User).first()
+        lang = request.params.get('lang')
+        country = request.params.get('country')
+        if bool(lang) ^ bool(country):
+            # either the request contains no lang options or both.
+            # if the request contains only one of the two, it's a bad request
+            raise HTTPBadRequest()
+        elif lang:
+            self.log.debug('Setting language to %s', lang)
+            request.language = Language.get_by_lang(request.db_session, lang)
