@@ -16,7 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from aybu.core.htmlmodifier import remove_target
+from aybu.core.htmlmodifier import remove_target_attributes
 from aybu.core.models import Setting
 from aybu.core.models import SettingType
 from BeautifulSoup import BeautifulSoup
@@ -94,8 +94,9 @@ class SettingHandler(BaseHandler):
             elif self.settings_proxy.getobj(name).raw_type == 'html':
                 # add smartquotes to prevent bsoup from translating smart-quotes
                 # and other windows-specific characters
-                value = remove_target(BeautifulSoup(value, smartQuotesTo=None))
-                value = unicode(value)
+                soup = BeautifulSoup(value, smartQuotesTo=None)
+                soup = remove_target_attributes(soup)
+                value = unicode(soup)
 
             setting.value = value
             self.session.flush()
