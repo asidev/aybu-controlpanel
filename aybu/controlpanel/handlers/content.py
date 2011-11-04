@@ -19,10 +19,10 @@ limitations under the License.
 import json
 from pyramid_handlers import action
 from . base import BaseHandler
-from aybu.core.models import Language
-from aybu.core.utils.spellchecking import SpellChecker
+from sqlalchemy.orm.exc import NoResultFound
 import pyramid.security
-
+from aybu.core.models import PageInfo
+from aybu.core.utils.spellchecking import SpellChecker
 
 __all__ = ['ContentHandler']
 
@@ -48,10 +48,51 @@ class ContentHandler(BaseHandler):
         self.log.debug("res: %s", res)
         return res
 
+    def prepare_response(self, status, message):
+        self.request.response.status_int = status
+        if status == 200:
+            self.session.commit()
+            # FIXME purge this page
+
+        else:
+            self.session.rollback()
+            self.log.debug(message)
+
+        return self.request.translate(message)
+
     @action(renderer='json',
            permission=pyramid.security.ALL_PERMISSIONS)
     def edit(self):
-        raise NotImplementedError
+        try:
+            pageinfo = PageInfo.get(self.session,
+                                    self.request.params['translation_id'])
+            html = self.request.params['translation_html']
+            pageinfo.content = html
+            self.session.flush()
+
+        except ValueError:
+            message = self.prepare_response(status=400,
+                                    message=u'Contenuto non valido')
+
+        except KeyError:
+            message = self.prepare_response(status=400,
+                                    message=u'Parametri mancanti')
+
+        except NoResultFound:
+            message = self.prepare_response(status=404,
+                                    message=u'Nessuna risorsa trovata')
+
+        except Exception:
+            self.log.exception('Unexpected error during content update')
+            message = self.prepare_response(status=500,
+                                    message=u"Errore nell'aggiornamento")
+
+        else:
+            message = self.prepare_response(status=200,
+                                message=u'Contenuto aggiornato correttamente')
+
+        finally:
+            return dict(msg=message)
 
     @action(renderer='json',
            permission=pyramid.security.ALL_PERMISSIONS)
