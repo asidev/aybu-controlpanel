@@ -88,7 +88,6 @@ class ImageHandler(BaseHandler):
                     if len(name) < 1:
                         raise TypeError("Il nome non può essere vuoto")
 
-                    old_name = image.name
                     image.name = name
 
             if 'file' in self.request.POST:
@@ -111,7 +110,7 @@ class ImageHandler(BaseHandler):
             self.res['errors']['id'] = 'Image not found'
 
         except TypeError as e:
-            self.log.debug('Invalid name %s' % (self.request.params['name']))
+            self.log.exception('Invalid name %s' % (self.request.params['name']))
             self.res['success'] = False
             self.res['errors']['name'] = str(e)
 
