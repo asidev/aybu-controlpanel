@@ -16,13 +16,24 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from aybu.core.exc import QuotaError
+from aybu.core.utils.modifiers import urlify
 from aybu.core.models import (Language,
                               Menu,
                               Node,
-                              Page)
+                              ExternalLink,
+                              InternalLink,
+                              Page,
+                              Section,
+                              ExternalLinkInfo,
+                              InternalLinkInfo,
+                              PageInfo,
+                              SectionInfo,
+                              View)
 from pyramid_handlers import action
 import pyramid.security
-from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.orm.exc import (NoResultFound,
+                                MultipleResultsFound)
 from . base import BaseHandler
 import copy
 import logging
@@ -155,7 +166,188 @@ class StructureHandler(BaseHandler):
     @action(renderer='json',
             permission=pyramid.security.ALL_PERMISSIONS)
     def create(self):
-        raise NotImplementedError
+
+        try:
+            language = self.request.language
+            type_ = self.request.params.get('type') # Specify model entity.
+
+            # Node attributes.
+            enabled = self.request.params.get('enabled', 'off')
+            enabled = True if enabled.lower() == 'on' else False
+
+            # FIXME: check JS to verify 'hidden' support.
+            hidden = self.request.params.get('hidden', 'off')
+            hidden = True if hidden.lower() == 'on' else False
+            parent = self.request.params.get('parent_id')
+            parent = None if parent is None else Node.get(self.session, parent)
+            weight = self.request.params.get('weight',
+                                             Node.get_max_weight(self.session,
+                                                                 parent))
+            weight = int(weight) + 1
+
+            # NodeInfo attributes
+            label = self.request.params.get('button_label')
+
+            # CommonInfo attributes.
+            title = self.request.params.get('title', '')
+            url_part = self.request.params.get('url_part', title).strip()
+            url_part = urlify(url_part)
+            meta_description = self.request.params.get('meta_description')
+            head_content = self.request.params.get('head_content')
+            # Use 'partial_url' as 'parent_url'
+            partial_url = self.request.params.get('partial_url')
+
+            if type_ in ('Section', 'Page') and \
+               partial_url is None and \
+               parent is None:
+
+                partial_url = '/{}'.format(language.lang)
+
+            elif type_ in ('Section', 'Page') and \
+                 partial_url is None and \
+                 isinstance(parent, (Section, Page)):
+
+                partial_url = node.get_translation(language).partial_url
+
+            if type_ == 'Section':
+
+                node = Section(enabled=enabled,
+                               hidden=hidden,
+                               parent=parent,
+                               weight=weight)
+                node_info = SectionInfo(label=label,
+                                        node=node,
+                                        lang=language,
+                                        title=title,
+                                        url_part=url_part,
+                                        meta_description=meta_description,
+                                        head_content=head_content,
+                                        partial_url=partial_url)
+
+            elif type_ == 'Page':
+                # Page attributes.
+                home = self.request.params.get('home', 'off')
+                home = True if home.lower() == 'on' else False
+                sitemap_priority = self.request.params.get('sitemap_priority')
+                sitemap_priority = int(sitemap_priority)
+                view = self.request.params.get('page_type_id')
+                view = None if view is None else View.get(self.session, view)
+
+                # PageInfo attributes.
+                url = self.request.params.get('url',
+                                              '{}/{}.html'.format(partial_url,
+                                                                  url_part))
+
+                if not Page.new_page_allowed:
+                    raise QuotaError('New pages are not allowed.')
+
+                try:
+                    # Check for URL collisions.
+                    page = PageInfo.get_by_url(self.session, url)
+
+                except NoResultFound as e:
+                    content = self.request.params.get('content',
+                                                      u'<h2>{}</h2>'.format(title))
+
+                    node = Page(enabled=enabled,
+                                hidden=hidden,
+                                parent=parent,
+                                weight=weight,
+                                home=home,
+                                sitemap_priority=sitemap_priority,
+                                view=view)
+                    node_info = PageInfo(label=label,
+                                         node=node,
+                                         lang=language,
+                                         title=title,
+                                         url_part=url_part,
+                                         meta_description=meta_description,
+                                         head_content=head_content,
+                                         partial_url=partial_url,
+                                         content=content,
+                                         url=url)
+                else:
+                    raise MultipleResultsFound('Pages URLs must be unique!')
+
+            elif type_ == 'InternalLink':
+
+                linked_to = self.request.params.get('linked_to')
+                if not linked_to is None:
+                    linked_to = InternalLink.get(self.session, linked_to)
+
+                node = InternalLink(enabled=enabled,
+                                    hidden=hidden, 
+                                    parent=parent,
+                                    weight=weight,
+                                    linked_to=linked_to)
+                node_info = InternalLinkInfo(label=label,
+                                             node=node,
+                                             lang=language)
+
+            elif type_ == 'ExternalLink':
+                ext_url = self.request.params.get('external_url')
+                node = ExternalLink(enabled=enabled,
+                                    hidden=hidden, 
+                                    parent=parent,
+                                    weight=weight)
+                node_info = ExternalLinkInfo(label=label,
+                                             node=node,
+                                             lang=language,
+                                             ext_url=ext_url)
+
+            else:
+                raise NotImplementedError('Cannot create: %s' % type_)
+
+            self.session.add(node)
+            self.session.add(node_info)
+            node_info.translate(enabled_only=True)
+
+        except NotImplementedError as e:
+            log.exception('Not Implemented.')
+            self.session.rollback()
+            self.request.response.status = 501 # HTTP 501 Not Implemented Error.
+            response = copy.deepcopy(self._response)
+            response['errors'] = {}
+            response['success'] = False
+            response['errors']['501'] = 'Cannot create %s entity.' % type_
+
+        except QuotaError as e:
+            log.exception('Quota Error.')
+            self.session.rollback()
+            self.request.response.status = 500
+            response = copy.deepcopy(self._response)
+            response['errors'] = {}
+            response['success'] = False
+            response['errors']['500'] = 'Maximum pages number reached.'
+
+        except MultipleResultsFound as e:
+            log.exception('Pages URls must be unique.')
+            self.session.rollback()
+            self.request.response.status = 409
+            response = copy.deepcopy(self._response)
+            response['errors'] = {}
+            response['success'] = False
+            response['errors']['409'] = str(e)
+
+        except Exception as e:
+            log.exception('Unknown Error.')
+            self.session.rollback()
+            self.request.response.status = 500
+            response = copy.deepcopy(self._response)
+            response['errors'] = {}
+            response['success'] = False
+            response['errors']['500'] = str(e)
+
+        else:
+            self.session.commit()
+            self.request.response.status = 200
+            response = copy.deepcopy(self._response)
+            response['errors'] = {}
+            response['dataset'] = [{'id': node.id}]
+            response['dataset_len'] = 1
+            response['success'] = True
+
+        return response
 
     @action(renderer='json',
             permission=pyramid.security.ALL_PERMISSIONS)

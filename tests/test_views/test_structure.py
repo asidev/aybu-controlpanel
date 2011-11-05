@@ -59,3 +59,38 @@ class StructuregHandlerFunctionalTests(FunctionalTestsBase):
         response = self.json_get(url='/admin/structure/info.html?id=1',
                                  status=200)
         self.success_assert(response)
+
+    def test_create(self):
+        response = self.json_get(url='/admin/structure/create.html', 
+                                 status=501)
+        self.base_assert(response)
+        self.assertEqual(response['success'], False)
+
+        response = self.json_get(url='/admin/structure/create.html?type=Menu',
+                                 status=501)
+        self.base_assert(response)
+        self.assertEqual(response['success'], False)
+
+        response = self.json_get(url='/admin/structure/create.html?type=Section',
+                                 status=500)
+        self.base_assert(response)
+        self.assertEqual(response['success'], False)
+
+        url = '/admin/structure/create.html?type=Section&parent_id=1'
+        response = self.json_get(url=url, status=500)
+        self.base_assert(response)
+        self.assertEqual(response['success'], False)
+
+        url = '/admin/structure/create.html?type=Section&parent_id=1&button_label=Hi'
+        response = self.json_get(url=url, status=200)
+        self.success_assert(response)
+
+        url = '/admin/structure/create.html?type=Page&parent_id=1&button_label=Hi&sitemap_priority=1&page_type_id=1'
+        response = self.json_get(url=url, status=200)
+        self.success_assert(response)
+        url = '/admin/structure/info.html?id=%s' % response['dataset'][0]['id']
+        response = self.json_get(url=url, status=200)
+        self.success_assert(response)
+
+        url = '/admin/structure/create.html?type=Section&parent_id=1'
+        response = self.json_get(url=url, status=200)
