@@ -36,8 +36,6 @@ class LoginHandler(BaseHandler):
     def login(self):
         res = dict(message=None, page='login')
         if self.request.params.get('submit') is None:
-            self.log.debug("User: %s", self.request.user)
-            self.log.debug("Session: %s", self.request.session.keys())
             if not self.request.user is None:
                 return HTTPFound(location=self.request.route_url('admin',
                                                                  action='index'))

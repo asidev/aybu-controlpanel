@@ -26,6 +26,14 @@ from . setting import SettingHandler
 from . admin import AdminHandler
 from . view import ViewHandler
 
+from pyramid.httpexceptions import HTTPFound
+
 __all__ = ['LoginHandler', 'ContentHandler', 'ImageHandler', 'FileHandler',
            'StructureHandler', 'LanguageHandler', 'SettingHandler',
-           'AdminHandler', 'ViewHandler']
+           'AdminHandler', 'ViewHandler', 'redirect_to_login']
+
+
+def redirect_to_login(context, request):
+    """ On 403, redirect to the login page """
+    request.session.flash('Effettuare il login')
+    return HTTPFound(location=request.route_path('login', action='login'))

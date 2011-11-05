@@ -23,6 +23,7 @@ from aybu.website.resources import get_root_resource
 from aybu.core.authentication import AuthenticationPolicy
 from pyramid.config import Configurator
 from pyramid_beaker import session_factory_from_settings
+from pyramid.httpexceptions import HTTPForbidden
 from sqlalchemy import engine_from_config
 import logging
 import pyramid.security
@@ -126,3 +127,6 @@ def add_handlers(config):
                     context='aybu.core.models.NodeInfo',
                     permission=pyramid.security.ALL_PERMISSIONS,
                     view='aybu.website.views.show_page')
+
+    config.add_view(context=HTTPForbidden,
+                    view='aybu.controlpanel.handlers.redirect_to_login')
