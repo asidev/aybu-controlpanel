@@ -91,6 +91,3 @@ class StructuregHandlerFunctionalTests(FunctionalTestsBase):
         url = '/admin/structure/info.html?id=%s' % response['dataset'][0]['id']
         response = self.json_get(url=url, status=200)
         self.success_assert(response)
-
-        url = '/admin/structure/create.html?type=Section&parent_id=1'
-        response = self.json_get(url=url, status=200)
