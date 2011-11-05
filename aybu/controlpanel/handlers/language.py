@@ -35,9 +35,11 @@ class LanguageHandler(BaseHandler):
             Enable the language identified by 'lang_id'.
         """
         try:
+            def_lang = self.request.registry.settings['default_locale_name']
+            def_lang = Language.get_by_lang(self.session, def_lang)
             language = Language.enable(self.session,
-                                       int(self.request.params.get('lang_id')),
-                                       int(self.request.params.get('src_clone_language_id')))
+                                       int(self.request.params['lang_id']),
+                                       def_lang.id)
             self.session.flush()
 
         except QuotaError as e:
@@ -73,7 +75,7 @@ class LanguageHandler(BaseHandler):
             Disable the language identified by 'lang_id'.
         """
         try:
-            lang_id = int(self.request.params.get('lang_id'))
+            lang_id = int(self.request.params['lang_id'])
 
             # FIXME: why this? adjust when there will be a session
             #if session['lang'].id == lang_id:
