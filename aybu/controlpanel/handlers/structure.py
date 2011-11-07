@@ -50,9 +50,7 @@ class StructureHandler(BaseHandler):
     @action(renderer='json',
             permission=pyramid.security.ALL_PERMISSIONS)
     def tree(self):
-        # FIXME: add beaker session.
-        # language = Language.get(self.session, client_session['lang'].id)
-        language = Language.get(self.session, 1)
+        language = self.request.language
         # FIXME: don't load all database!!!
         # HINT: add parameter 'level' to the request to load first N levels.
         return [node.to_dict(language)
@@ -66,9 +64,7 @@ class StructureHandler(BaseHandler):
         """
         self.request.response.content_type = "application/javascript"
         try:
-            # FIXME: add beaker session.
-            # language = Language.get(self.session, client_session['lang'].id)
-            language = Language.get(self.session, 1)
+            language = self.request.language
 
             items = []
             for page in Page.all(self.session):
@@ -98,9 +94,7 @@ class StructureHandler(BaseHandler):
         response = copy.deepcopy(self._response)
 
         try:
-            # FIXME: add beaker session.
-            # language = Language.get(self.session, client_session['lang'].id)
-            language = Language.get(self.session, 1)
+            language = self.request.language
 
             response['dataset'] = [page.to_dict(language, recursive=False)
                                    for page in Page.all(self.session)]
@@ -129,9 +123,7 @@ class StructureHandler(BaseHandler):
         response = copy.deepcopy(self._response)
 
         try:
-            # FIXME: add beaker session.
-            # language = Language.get(self.session, client_session['lang'].id)
-            language = Language.get(self.session, 1)
+            language = self.request.language
             node = Node.get(self.session, int(self.request.params.get('id')))
             translation = node.get_translation(language)
 
