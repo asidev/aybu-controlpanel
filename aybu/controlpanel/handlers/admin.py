@@ -56,35 +56,35 @@ class AdminHandler(BaseHandler):
                     result_message=None, errors=dict(old_password='',
                                                      repeat_password=''))
 
-        if not self.request.params.get('submit'):
+        if not self.request.params.get('submitted'):
            return res
 
         res['success'] = False
         try:
-            User.check(self.request.session,
-                       self.request.username,
-                       self.request.params['old_password'])
+            self.request.user.check_password(self.request.params['old_password'])
+
         except ValueError:
             msg = self.request.translate(u'Vecchia password non corretta')
             res['errors']['old_password'] = msg
 
-        new = self.request.params.get('new_password', '')
-        rep = self.request.params.get('repeat_password', '')
-        if new != rep:
-            msg = self.request.translate(u'Le password non coincidono')
-            res['errors']['repeat_password'] = msg
-
-        elif len(new) < 6:
-            msg = u'La password deve essere di almeno 6 caratteri'
-            msg = self.request.translate(msg)
-            res['errors']['repeat_password'] = msg
-
         else:
-            self.request.user.password = new
-            self.session.commit()
-            res['success'] = True
-            msg = self.request.translate(u'Password aggiornata')
-            res['result_message'] = msg
+            new = self.request.params.get('new_password', '')
+            rep = self.request.params.get('repeat_password', '')
+            if new != rep:
+                msg = self.request.translate(u'Le password non coincidono')
+                res['errors']['repeat_password'] = msg
+
+            elif len(new) < 6:
+                msg = u'La password deve essere di almeno 6 caratteri'
+                msg = self.request.translate(msg)
+                res['errors']['repeat_password'] = msg
+
+            else:
+                self.request.user.password = new
+                self.session.commit()
+                res['success'] = True
+                msg = self.request.translate(u'Password aggiornata')
+                res['result_message'] = msg
 
         return res
 

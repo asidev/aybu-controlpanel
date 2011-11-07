@@ -31,6 +31,7 @@ class BaseHandler(object):
         self.request.template_helper.section = 'admin'
         self.log = logging.getLogger("%s.%s" % ( self.__class__.__module__,
                                                 self.__class__.__name__))
+        self.log.debug("handle request for %s", request.path_info)
 
         lang = request.params.get('lang')
         country = request.params.get('country')
