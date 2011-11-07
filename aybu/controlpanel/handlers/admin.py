@@ -175,6 +175,7 @@ class AdminHandler(BaseHandler):
         errors = dict()
         messages = dict()
         purge_all = False
+        commit = False
 
         for name in ('banner', 'logo'):
             errors[name] = None
@@ -189,22 +190,35 @@ class AdminHandler(BaseHandler):
             if self.request.params.get(key, None):
                 obj = cls.get_default(self.session)
                 if obj:
+                    self.log.debug("Removing default %s", name)
                     obj.delete()
                     purge_all = True
+                    commit = True
+                else:
+                    self.log.info("Skipping default %s removal, none found",
+                                  name)
                 message = u'{} rimosso con successo'.format(name.title())
                 messages[key] = self.request.translate(message)
 
             # handle upload
             key = '{}_image'.format(name)
-            source = self.request.params.get(key, None)
-            if source:
+            source = self.request.params.get(key)
+            if not source is None and not source == '':
+                self.log.debug("Updating default %s", name)
                 filename = Setting.get(self.session, name).value
                 try:
-                    cls(name=filename, source=source.file, session=self.session)
+                    obj = cls.get_default(self.session)
+                    if obj:
+                        self.log.debug("Removing default banner first")
+                        obj.delete()
+                    cls(name=filename, source=source.file,
+                        session=self.session, default=True)
                     message = u'{} aggiornato con successo'.format(name.title())
                     purge_all = True
+                    commit = True
 
                 except Exception:
+                    self.log.exception('Error while updating %s', name)
                     message = u"{}: errore nell'aggiornamento"\
                                     .format(name.title())
 
@@ -214,6 +228,9 @@ class AdminHandler(BaseHandler):
             if purge_all:
                 # TODO flush all pages from proxy
                 pass
+
+            if commit:
+                self.session.commit()
 
         return dict(page='banner_logo', errors=errors, messages=messages)
 
