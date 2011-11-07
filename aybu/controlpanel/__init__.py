@@ -57,15 +57,18 @@ def main(global_config, **settings):
     # configure controlpanel
     return config.make_wsgi_app()
 
-def set_session_path(event):
-    event.request.session.path = '/admin'
+
+def set_session_path(request):
+    request.session.path = '/admin/'
 
 
 def includeme(config):
     config.add_translation_dirs('aybu.controlpanel:locale')
     config.include('pyramid_handlers')
     config.include(add_handlers)
-    config.add_subscriber(set_session_path, 'pyramid.events.NewRequest')
+    config.add_subscriber(
+        lambda e: e.request.add_finished_callback(set_session_path),
+        'pyramid.events.NewRequest')
 
 
 def add_handlers(config):
