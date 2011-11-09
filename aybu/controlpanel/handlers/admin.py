@@ -214,6 +214,7 @@ class AdminHandler(BaseHandler):
                     cls(name=filename, source=source.file,
                         session=self.session, default=True)
                     message = u'{} aggiornato con successo'.format(name.title())
+                    messages[key] = self.request.translate(message)
                     purge_all = True
                     commit = True
 
