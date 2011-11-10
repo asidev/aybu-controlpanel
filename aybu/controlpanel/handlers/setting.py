@@ -91,7 +91,7 @@ class SettingHandler(BaseHandler):
             elif setting.type.raw_type == 'bool':
                 value = 'False'
 
-            elif self.settings_proxy.getobj(name).raw_type == 'html':
+            elif setting.type.raw_type == 'html':
                 # add smartquotes to prevent bsoup from translating smart-quotes
                 # and other windows-specific characters
                 soup = BeautifulSoup(value, smartQuotesTo=None)
@@ -144,22 +144,20 @@ class SettingHandler(BaseHandler):
             sort_by = self.request.params.get('sort')
             sort_order = self.request.params.get('dir', 'desc').lower()
 
-            debug = Setting.get(self.session, 'debug').value
             response['dataset_len'] = Setting.count(self.session,
-                                                    ui_administrable=debug)
+                                                    self.request.user)
 
             log.debug('Start: %s.', start)
             log.debug('Limit: %s.', limit)
             log.debug('Sort by: %s.', sort_by)
             log.debug('Sort order: %s.', sort_order)
-            log.debug("Setting 'debug': %s.", debug)
             log.debug("Collection count: %s.", response['dataset_len'])
 
             response['dataset'] = []
             for setting in Setting.list(self.session,
-                                        ui_administrable=debug,
                                         limit=limit, start=start,
-                                        sort_by=sort_by, sort_order=sort_order):
+                                        sort_by=sort_by, sort_order=sort_order,
+                                        user=self.request.user):
                 response['dataset'].append(setting.to_dict())
 
             log.debug("Dataset length: %s.", len(response['dataset']))
