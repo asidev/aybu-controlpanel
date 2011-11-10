@@ -120,11 +120,11 @@ class AdminHandler(BaseHandler):
             source = self.request.params['file']
             info = PageInfo.get(self.session, id_)
             self.log.debug("Updating banner for page '{}'".format(info.label))
-            for banner in info.page.banners:
+            for banner in info.node.banners:
                 banner.delete()
-            info.page.banners = []
+            info.node.banners = []
 
-            info.page.banners.append(
+            info.node.banners.append(
                 Banner(source=source.file, name=name, session=self.session)
             )
             self.session.flush()
@@ -137,6 +137,7 @@ class AdminHandler(BaseHandler):
             self.log.exception("Error removing banner")
 
         else:
+            res['success'] = True
             self.session.commit()
             # TODO: flush cache for page
 
@@ -150,7 +151,7 @@ class AdminHandler(BaseHandler):
         try:
             info = PageInfo.get(self.session,
                                 self.request.params['nodeinfo_id'])
-            for banner in info.page.banners:
+            for banner in info.node.banners:
                 banner.delete()
 
             self.session.flush()
@@ -163,6 +164,7 @@ class AdminHandler(BaseHandler):
             self.log.exception("Error removing banner")
 
         else:
+            res['success'] = True
             self.session.commit()
             # TODO: flush cache for page
 
