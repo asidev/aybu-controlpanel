@@ -52,7 +52,7 @@ class ContentHandler(BaseHandler):
         self.request.response.status_int = status
         if status == 200:
             self.session.commit()
-            # FIXME purge this page
+            # TODO: purge cache
 
         else:
             self.session.rollback()

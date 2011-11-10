@@ -41,10 +41,7 @@ class ViewHandler(BaseHandler):
 
     def _list(self, session):
 
-        # FIXME: adjust when there will be a session
-        language = Language.first(self.session)
-        # language = session['lang']
-
+        language = self.request.language
         items = []
 
         for view in View.all(session):

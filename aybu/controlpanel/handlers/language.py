@@ -63,7 +63,7 @@ class LanguageHandler(BaseHandler):
             success = True
             msg = self.request.translate(
                 u'Lingua %s aggiunta con successo.' % name)
-            #FIXME: reload_routing()
+            #TODO: purge cache
 
         finally:
             return dict(success=success, msg=msg)
@@ -76,11 +76,6 @@ class LanguageHandler(BaseHandler):
         """
         try:
             lang_id = int(self.request.params['lang_id'])
-
-            # FIXME: why this? adjust when there will be a session
-            #if session['lang'].id == lang_id:
-            #    raise ValidationError('Cannot disable current language.')
-
             Language.disable(self.session, lang_id)
             self.session.flush()
 
@@ -103,7 +98,7 @@ class LanguageHandler(BaseHandler):
             success = True
             msg = self.request.translate(u"Lingua rimossa con successo.")
             self.log.debug("Language remove successfully.")
-            # FIXME: reload_routing()
+            #TODO: purge cache
 
         finally:
             return dict(success=success, msg=msg)

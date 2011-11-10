@@ -139,7 +139,7 @@ class AdminHandler(BaseHandler):
         else:
             res['success'] = True
             self.session.commit()
-            # TODO: flush cache for page
+            # TODO: purge cache
 
         finally:
             return res
@@ -166,7 +166,7 @@ class AdminHandler(BaseHandler):
         else:
             res['success'] = True
             self.session.commit()
-            # TODO: flush cache for page
+            # TODO: purge cache
 
         finally:
             return res
@@ -229,7 +229,7 @@ class AdminHandler(BaseHandler):
                     messages[key] = self.request.translate(message)
 
             if purge_all:
-                # TODO flush all pages from proxy
+                # TODO: purge cache
                 pass
 
             if commit:

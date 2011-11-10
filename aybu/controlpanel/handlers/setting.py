@@ -100,9 +100,7 @@ class SettingHandler(BaseHandler):
 
             setting.value = value
             self.session.flush()
-
-            #FIXME: ???
-            #aybu.cms.lib.cache.pages.clear()
+            # TODO: purge cache
 
         except (NoResultFound, TypeError) as e:
             log.exception('No setting found.')

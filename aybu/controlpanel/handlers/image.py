@@ -57,10 +57,7 @@ class ImageHandler(BaseHandler):
             self.session.commit()
             self.res.update(image.to_dict())
             self.res['success'] = True
-            # this should not be needed, but for safety we purge
-            # the url in proxy anyway
-            # FIXME: purge varnish :
-            # aybu.cms.lib.cache.http.purge_http(image.url)
+            # TODO: purge cache
 
         finally:
             return self.res
@@ -123,8 +120,7 @@ class ImageHandler(BaseHandler):
             self.session.commit()
             del self.res["errors"]
             self.res['success'] = True
-            # FIXME handle purge
-            #aybu.cms.lib.cache.http.purge_http(image.url)
+            # TODO: purge cache
 
         finally:
             return self.res
@@ -143,8 +139,7 @@ class ImageHandler(BaseHandler):
         else:
             self.session.commit()
             self.res['success'] = True
-            # FIXME handle purge
-            #aybu.cms.lib.cache.http.purge_http(image.url)
+            # TODO: purge cache
 
         finally:
             return self.res
