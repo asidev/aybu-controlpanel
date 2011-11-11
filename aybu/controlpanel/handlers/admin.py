@@ -118,13 +118,13 @@ class AdminHandler(BaseHandler):
             name = self.request.params['name']
             id_ = self.request.params['nodeinfo_id']
             source = self.request.params['file']
-            info = PageInfo.get(self.session, id_)
-            self.log.debug("Updating banner for page '{}'".format(info.label))
-            for banner in info.node.banners:
+            page = PageInfo.get(self.session, id_)
+            self.log.debug("Updating banner for page '{}'".format(page.label))
+            for banner in page.node.banners:
                 banner.delete()
-            info.node.banners = []
+            page.node.banners = []
 
-            info.node.banners.append(
+            page.node.banners.append(
                 Banner(source=source.file, name=name, session=self.session)
             )
             self.session.flush()
@@ -139,7 +139,7 @@ class AdminHandler(BaseHandler):
         else:
             res['success'] = True
             self.session.commit()
-            # TODO: purge cache
+            self.proxy.invalidate(url=page.url)
 
         finally:
             return res
@@ -149,9 +149,9 @@ class AdminHandler(BaseHandler):
     def remove_page_banners(self):
         res = dict(success=False)
         try:
-            info = PageInfo.get(self.session,
+            page = PageInfo.get(self.session,
                                 self.request.params['nodeinfo_id'])
-            for banner in info.node.banners:
+            for banner in page.node.banners:
                 banner.delete()
 
             self.session.flush()
@@ -166,7 +166,7 @@ class AdminHandler(BaseHandler):
         else:
             res['success'] = True
             self.session.commit()
-            # TODO: purge cache
+            self.proxy.invalidate(url=page.url)
 
         finally:
             return res
@@ -229,8 +229,7 @@ class AdminHandler(BaseHandler):
                     messages[key] = self.request.translate(message)
 
             if purge_all:
-                # TODO: purge cache
-                pass
+                self.proxy.invalidate(pages=True)
 
             if commit:
                 self.session.commit()

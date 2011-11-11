@@ -33,40 +33,59 @@ class Proxy(object):
 
 
 class BaseProxy(object):
+
     def __init__(self, request):
         session = request.db_session
         self._log = logging.getLogger("{}.{}".format(__name__,
                                                     self.__class__.__name__))
         self.hostname = request.host.split(":")[0]
-        self.default_path = request.path_info
         self.address = Setting.get(session, 'proxy_address')
         self.port = Setting.get(session, 'proxy_port')
         self.timeout = Setting.get(session, 'proxy_purge_timeout')
-
-    def _sanitize_path(self, paths):
-        if paths is None:
-            paths = [self.default_path]
-        elif isinstance(paths, basestring):
-            paths = [paths]
-        return paths
 
     def ban(self, paths):
         raise NotImplementedError
 
     def purge(self, paths):
         raise NotImplementedError
+
+    def invalidate_static(self, subdir=None, extension=None):
+        path = '^/static/'
+        if subdir:
+            path = "{}{}/".format(path, subdir)
+        path = '{}.*'.format(path)
+        if extension:
+            path = '{}.{}'.format(path, extension)
+        self.ban(path)
+
+    def invalidate(self, url=None, language=None, pages=None):
+        if not any((url, language, pages)):
+            raise ValueError('No target for invalidate')
+
+        if url:
+            self.purge(url)
+        elif language:
+            if not isinstance(language, basestring):
+                language = language.lang
+            self.ban(r'^/{}/.*.html'.format(language))
+        elif pages:
+            self.ban(r'^/[a-z]{2}/.*.html')
+
 
 
 class DummyProxy(BaseProxy):
     """ A do-nothing-proxy """
 
     def __init__(self, request):
-        pass
+        self._log = logging.getLogger("{}.{}".format(__name__,
+                                                    self.__class__.__name__))
 
     def ban(self, paths):
+        self._log.debug("Banning %s (noop)", paths)
         return
 
     def purge(self, paths):
+        self._log.debug("Purging %s (noop)", paths)
         return
 
 
@@ -80,8 +99,9 @@ class HttpCachePurgerProxy(BaseProxy):
         return HTTPCachePurger(self.hostname, self.address, self.port,
                                strict=True, timeout=self.timeout)
 
-    def ban(self, paths=None):
-        paths = self._sanitize_paths(paths)
+    def ban(self, paths):
+        if isinstance(paths, basestring):
+            paths = [paths]
         self._purger.purge(paths)
 
     def purge(self, paths=None):

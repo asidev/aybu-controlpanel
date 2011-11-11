@@ -100,7 +100,7 @@ class SettingHandler(BaseHandler):
 
             setting.value = value
             self.session.flush()
-            # TODO: purge cache
+            self.proxy.invalidate(pages=True)
 
         except (NoResultFound, TypeError) as e:
             log.exception('No setting found.')

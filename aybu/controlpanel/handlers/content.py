@@ -48,11 +48,11 @@ class ContentHandler(BaseHandler):
         self.log.debug("res: %s", res)
         return res
 
-    def prepare_response(self, status, message):
+    def prepare_response(self, status, message, page=None):
         self.request.response.status_int = status
         if status == 200:
             self.session.commit()
-            # TODO: purge cache
+            self.proxy.invalidate(url=page.url)
 
         else:
             self.session.rollback()
@@ -88,8 +88,10 @@ class ContentHandler(BaseHandler):
                                     message=u"Errore nell'aggiornamento")
 
         else:
-            message = self.prepare_response(status=200,
-                                message=u'Contenuto aggiornato correttamente')
+            message = self.prepare_response(
+                        status=200,
+                        message=u'Contenuto aggiornato correttamente',
+                        page=pageinfo)
 
         finally:
             return dict(msg=message)

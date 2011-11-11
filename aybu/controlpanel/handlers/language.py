@@ -63,7 +63,7 @@ class LanguageHandler(BaseHandler):
             success = True
             msg = self.request.translate(
                 u'Lingua %s aggiunta con successo.' % name)
-            #TODO: purge cache
+            self.proxy.invalidate(language=language)
 
         finally:
             return dict(success=success, msg=msg)
@@ -76,7 +76,7 @@ class LanguageHandler(BaseHandler):
         """
         try:
             lang_id = int(self.request.params['lang_id'])
-            Language.disable(self.session, lang_id)
+            language = Language.disable(self.session, lang_id)
             self.session.flush()
 
         except QuotaError as e:
@@ -98,7 +98,7 @@ class LanguageHandler(BaseHandler):
             success = True
             msg = self.request.translate(u"Lingua rimossa con successo.")
             self.log.debug("Language remove successfully.")
-            #TODO: purge cache
+            self.proxy.invalidate(language=language)
 
         finally:
             return dict(success=success, msg=msg)

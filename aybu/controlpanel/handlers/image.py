@@ -57,7 +57,6 @@ class ImageHandler(BaseHandler):
             self.session.commit()
             self.res.update(image.to_dict())
             self.res['success'] = True
-            # TODO: purge cache
 
         finally:
             return self.res
@@ -120,7 +119,7 @@ class ImageHandler(BaseHandler):
             self.session.commit()
             del self.res["errors"]
             self.res['success'] = True
-            # TODO: purge cache
+            self.proxy.invalidate(url=image.url)
 
         finally:
             return self.res
@@ -139,7 +138,7 @@ class ImageHandler(BaseHandler):
         else:
             self.session.commit()
             self.res['success'] = True
-            # TODO: purge cache
+            self.proxy.invalidate(url=image.url)
 
         finally:
             return self.res

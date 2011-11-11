@@ -18,6 +18,7 @@ limitations under the License.
 
 import logging
 from pyramid.httpexceptions import HTTPBadRequest
+from aybu.controlpanel.proxy import Proxy
 from aybu.core.models import Language
 
 
@@ -42,3 +43,7 @@ class BaseHandler(object):
         elif lang:
             self.log.debug('Setting language to %s', lang)
             request.language = Language.get_by_lang(request.db_session, lang)
+
+    @property
+    def proxy(self):
+        return Proxy(self.request)
