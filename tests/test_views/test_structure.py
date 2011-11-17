@@ -92,5 +92,47 @@ class StructuregHandlerFunctionalTests(FunctionalTestsBase):
         response = self.json_get(url=url, status=200)
         self.success_assert(response)
 
-        url = '/admin/structure/create.html?type=Section&parent_id=1'
-        response = self.json_get(url=url, status=200)
+    def test_update(self):
+        response = self.json_get(url='/admin/structure/update.html',
+                                 status=400)
+        self.base_assert(response)
+        self.assertEqual(response['success'], False)
+
+        old = self.json_get(url='/admin/structure/info.html?id=4',
+                            status=200)
+        self.success_assert(old)
+
+        response = self.json_get(url='/admin/structure/update.html?id=4',
+                            status=200)
+        self.success_assert(response)
+
+        new = self.json_get(url='/admin/structure/info.html?id=4',
+                            status=200)
+        self.success_assert(new)
+
+        self.assertEqual(old['data'], new['data'])
+
+        old = self.json_get(url='/admin/structure/info.html?id=4',
+                            status=200)
+        self.success_assert(old)
+
+        response = self.json_get(url='/admin/structure/update.html?id=4&url_part=changed',
+                            status=200)
+        self.success_assert(response)
+
+        new = self.json_get(url='/admin/structure/info.html?id=4',
+                            status=200)
+        self.success_assert(new)
+
+        self.assertNotEqual(old['data'], new['data'])
+        self.assertEqual(new['data']['url_part'], 'changed')
+        self.assertEqual(new['data']['partial_url'], '/en')
+        old['data']['url_part'] = 'changed'
+        self.assertEqual(old['data'], new['data'])
+
+        child = self.json_get(url='/admin/structure/info.html?id=5',
+                              status=200)
+        self.success_assert(child)
+        self.assertEqual(child['data']['partial_url'],
+                         '{}/{}'.format(new['data']['partial_url'],
+                                        new['data']['url_part']))

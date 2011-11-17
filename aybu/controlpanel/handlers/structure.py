@@ -198,16 +198,16 @@ class StructureHandler(BaseHandler):
             head_content = self.request.params.get('head_content')
             # Use 'partial_url' as 'parent_url'
 
-            if type_ in ('Section', 'Page') and parent is None:
-
-                partial_url = '/{}'.format(language.lang)
-
-            elif type_ in ('Section', 'Page') and isinstance(parent,
+            if type_ in ('Section', 'Page') and isinstance(parent,
                                                              (Section, Page)):
 
                 parent_info = parent.get_translation(language)
                 partial_url = '{}/{}'.format(parent_info.partial_url,
                                              parent_info.url_part)
+
+            else:
+                partial_url = '/{}'.format(language.lang)
+
 
             if type_ == 'Section':
 
@@ -353,21 +353,26 @@ class StructureHandler(BaseHandler):
         try:
 
             language = self.request.language
-            node_id = int(request.params.get('id'))
+            node_id = int(self.request.params.get('id'))
             node = Node.get(self.session, node_id)
             info = node.get_translation(language)
 
             # Node attributes.
-            enabled = self.request.params.get('enabled', 'off')
-            enabled = True if enabled.lower() == 'on' else False
+            enabled = self.request.params.get('enabled')
+            if enabled is None:
+                enabled = node.enabled
+            else:
+                enabled = True if enabled.lower() == 'on' else False
             # NodeInfo attributes
-            label = self.request.params.get('button_label')
+            label = self.request.params.get('button_label', info.label)
             # CommonInfo attributes.
-            title = self.request.params.get('title', '')
-            url_part = self.request.params.get('url_part', title).strip()
+            title = self.request.params.get('title', info.title)
+            url_part = self.request.params.get('url_part', info.url_part).strip()
             url_part = urlify(url_part)
-            meta_description = self.request.params.get('meta_description')
-            head_content = self.request.params.get('head_content')
+            meta_description = self.request.params.get('meta_description',
+                                                       info.meta_description)
+            head_content = self.request.params.get('head_content',
+                                                   info.head_content)
 
             node.enabled = enabled
             info.title = title
@@ -376,6 +381,8 @@ class StructureHandler(BaseHandler):
             info.head_content = head_content
 
             if isinstance(node, (Page, Section)) and info.url_part != url_part:
+                log.debug("Change url_part from '%s' to '%s'.",
+                          info.url_part, url_part)
                 info.url_part = url_part
 
             if isinstance(node, Page):
