@@ -167,6 +167,8 @@ class StructureHandler(BaseHandler):
             permission=pyramid.security.ALL_PERMISSIONS)
     def create(self):
 
+        response = copy.deepcopy(self._response)
+
         try:
             language = self.request.language
             type_ = self.request.params.get('type') # Specify model entity.
@@ -189,25 +191,23 @@ class StructureHandler(BaseHandler):
             label = self.request.params.get('button_label')
 
             # CommonInfo attributes.
-            title = self.request.params.get('title', '')
+            title = self.request.params.get('title', 'No title')
             url_part = self.request.params.get('url_part', title).strip()
             url_part = urlify(url_part)
             meta_description = self.request.params.get('meta_description')
             head_content = self.request.params.get('head_content')
             # Use 'partial_url' as 'parent_url'
-            partial_url = self.request.params.get('partial_url')
 
-            if type_ in ('Section', 'Page') and \
-               partial_url is None and \
-               parent is None:
+            if type_ in ('Section', 'Page') and parent is None:
 
                 partial_url = '/{}'.format(language.lang)
 
-            elif type_ in ('Section', 'Page') and \
-                 partial_url is None and \
-                 isinstance(parent, (Section, Page)):
+            elif type_ in ('Section', 'Page') and isinstance(parent,
+                                                             (Section, Page)):
 
-                partial_url = node.get_translation(language).partial_url
+                parent_info = parent.get_translation(language)
+                partial_url = '{}/{}'.format(parent_info.partial_url,
+                                             parent_info.url_part)
 
             if type_ == 'Section':
 
@@ -276,7 +276,7 @@ class StructureHandler(BaseHandler):
                     linked_to = InternalLink.get(self.session, linked_to)
 
                 node = InternalLink(enabled=enabled,
-                                    hidden=hidden, 
+                                    hidden=hidden,
                                     parent=parent,
                                     weight=weight,
                                     linked_to=linked_to)
@@ -287,7 +287,7 @@ class StructureHandler(BaseHandler):
             elif type_ == 'ExternalLink':
                 ext_url = self.request.params.get('external_url')
                 node = ExternalLink(enabled=enabled,
-                                    hidden=hidden, 
+                                    hidden=hidden,
                                     parent=parent,
                                     weight=weight)
                 node_info = ExternalLinkInfo(label=label,
@@ -306,7 +306,6 @@ class StructureHandler(BaseHandler):
             log.exception('Not Implemented.')
             self.session.rollback()
             self.request.response.status = 501 # HTTP 501 Not Implemented Error.
-            response = copy.deepcopy(self._response)
             response['errors'] = {}
             response['success'] = False
             response['errors']['501'] = 'Cannot create %s entity.' % type_
@@ -315,7 +314,6 @@ class StructureHandler(BaseHandler):
             log.exception('Quota Error.')
             self.session.rollback()
             self.request.response.status = 500
-            response = copy.deepcopy(self._response)
             response['errors'] = {}
             response['success'] = False
             response['errors']['500'] = 'Maximum pages number reached.'
@@ -324,7 +322,6 @@ class StructureHandler(BaseHandler):
             log.exception('Pages URls must be unique.')
             self.session.rollback()
             self.request.response.status = 409
-            response = copy.deepcopy(self._response)
             response['errors'] = {}
             response['success'] = False
             response['errors']['409'] = str(e)
@@ -333,7 +330,6 @@ class StructureHandler(BaseHandler):
             log.exception('Unknown Error.')
             self.session.rollback()
             self.request.response.status = 500
-            response = copy.deepcopy(self._response)
             response['errors'] = {}
             response['success'] = False
             response['errors']['500'] = str(e)
@@ -341,7 +337,6 @@ class StructureHandler(BaseHandler):
         else:
             self.session.commit()
             self.request.response.status = 200
-            response = copy.deepcopy(self._response)
             response['errors'] = {}
             response['dataset'] = [{'id': node.id}]
             response['dataset_len'] = 1
@@ -352,7 +347,83 @@ class StructureHandler(BaseHandler):
     @action(renderer='json',
             permission=pyramid.security.ALL_PERMISSIONS)
     def update(self):
-        raise NotImplementedError
+
+        response = copy.deepcopy(self._response)
+
+        try:
+
+            language = self.request.language
+            node_id = int(request.params.get('id'))
+            node = Node.get(self.session, node_id)
+            info = node.get_translation(language)
+
+            # Node attributes.
+            enabled = self.request.params.get('enabled', 'off')
+            enabled = True if enabled.lower() == 'on' else False
+            # NodeInfo attributes
+            label = self.request.params.get('button_label')
+            # CommonInfo attributes.
+            title = self.request.params.get('title', '')
+            url_part = self.request.params.get('url_part', title).strip()
+            url_part = urlify(url_part)
+            meta_description = self.request.params.get('meta_description')
+            head_content = self.request.params.get('head_content')
+
+            node.enabled = enabled
+            info.title = title
+            info.label = label
+            info.meta_description = meta_description
+            info.head_content = head_content
+
+            if isinstance(node, (Page, Section)) and info.url_part != url_part:
+                info.url_part = url_part
+
+            if isinstance(node, Page):
+                node.view = View.get(self.session,
+                                     int(request.params.get('page_type_id')))
+
+            elif isinstance(node, InternalLink):
+                node.linked_to = Node.get(self.session,
+                                          int(request.params.get('linked_to')))
+
+            elif isinstance(node, ExternalLink):
+                ext_url = request.params.get('external_url', '')
+                if not ext_url.startswith("http://"):
+                    ext_url = 'http://' + ext_url
+                info.ext_url = ext_url
+
+            """ FIXME: purge cache.
+            if routing_changed:
+                reload_routing()
+            else:
+                aybu.cms.lib.cache.flush_all()
+            """
+
+        except (TypeError, NoResultFound) as e:
+            log.exception('Bad request params.')
+            self.session.rollback()
+            self.request.response.status = 400
+            response['errors'] = {}
+            response['success'] = False
+            response['errors']['400'] = str(e)
+
+        except Exception as e:
+            log.exception('Unknown Error.')
+            self.session.rollback()
+            self.request.response.status = 500
+            response['errors'] = {}
+            response['success'] = False
+            response['errors']['500'] = str(e)
+
+        else:
+            self.session.commit()
+            self.request.response.status = 200
+            response['errors'] = {}
+            response['dataset'] = [{'id': node.id}]
+            response['dataset_len'] = 1
+            response['success'] = True
+
+        return response
 
     @action(renderer='json', name='destroy',
             permission=pyramid.security.ALL_PERMISSIONS)
@@ -363,8 +434,3 @@ class StructureHandler(BaseHandler):
             permission=pyramid.security.ALL_PERMISSIONS)
     def move(self):
         raise NotImplementedError
-
-
-
-
-

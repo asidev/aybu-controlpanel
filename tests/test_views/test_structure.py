@@ -41,17 +41,17 @@ class StructuregHandlerFunctionalTests(FunctionalTestsBase):
         self.assertNotEqual(len(response), 0)
 
     def test_link_list(self):
-        response = self.testapp.get(url='/admin/structure/link_list.html', 
+        response = self.testapp.get(url='/admin/structure/link_list.html',
                                     status=200)
         self.assertNotEqual(response, '')
 
     def test_list(self):
-        response = self.json_get(url='/admin/structure/list.html', 
+        response = self.json_get(url='/admin/structure/list.html',
                                  status=200)
         self.success_assert(response)
 
     def test_info(self):
-        response = self.json_get(url='/admin/structure/info.html', 
+        response = self.json_get(url='/admin/structure/info.html',
                                  status=400)
         self.base_assert(response)
         self.assertEqual(response['success'], False)
@@ -61,7 +61,7 @@ class StructuregHandlerFunctionalTests(FunctionalTestsBase):
         self.success_assert(response)
 
     def test_create(self):
-        response = self.json_get(url='/admin/structure/create.html', 
+        response = self.json_get(url='/admin/structure/create.html',
                                  status=501)
         self.base_assert(response)
         self.assertEqual(response['success'], False)
@@ -91,3 +91,6 @@ class StructuregHandlerFunctionalTests(FunctionalTestsBase):
         url = '/admin/structure/info.html?id=%s' % response['dataset'][0]['id']
         response = self.json_get(url=url, status=200)
         self.success_assert(response)
+
+        url = '/admin/structure/create.html?type=Section&parent_id=1'
+        response = self.json_get(url=url, status=200)
