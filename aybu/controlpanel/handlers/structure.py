@@ -196,17 +196,14 @@ class StructureHandler(BaseHandler):
             url_part = urlify(url_part)
             meta_description = self.request.params.get('meta_description')
             head_content = self.request.params.get('head_content')
-            # Use 'partial_url' as 'parent_url'
 
             if type_ in ('Section', 'Page') and isinstance(parent,
                                                              (Section, Page)):
 
-                parent_info = parent.get_translation(language)
-                partial_url = '{}/{}'.format(parent_info.partial_url,
-                                             parent_info.url_part)
+                parent_url = parent.get_translation(language).url
 
             else:
-                partial_url = '/{}'.format(language.lang)
+                parent_url = '/{}'.format(language.lang)
 
 
             if type_ == 'Section':
@@ -222,7 +219,7 @@ class StructureHandler(BaseHandler):
                                         url_part=url_part,
                                         meta_description=meta_description,
                                         head_content=head_content,
-                                        partial_url=partial_url)
+                                        parent_url=parent_url)
 
             elif type_ == 'Page':
                 # Page attributes.
@@ -233,41 +230,28 @@ class StructureHandler(BaseHandler):
                 view = self.request.params.get('page_type_id')
                 view = None if view is None else View.get(self.session, view)
 
-                # PageInfo attributes.
-                url = self.request.params.get('url',
-                                              '{}/{}.html'.format(partial_url,
-                                                                  url_part))
-
                 if not Page.new_page_allowed:
                     raise QuotaError('New pages are not allowed.')
 
-                try:
-                    # Check for URL collisions.
-                    page = PageInfo.get_by_url(self.session, url)
+                content = self.request.params.get('content',
+                                                  u'<h2>{}</h2>'.format(title))
 
-                except NoResultFound as e:
-                    content = self.request.params.get('content',
-                                                      u'<h2>{}</h2>'.format(title))
-
-                    node = Page(enabled=enabled,
-                                hidden=hidden,
-                                parent=parent,
-                                weight=weight,
-                                home=home,
-                                sitemap_priority=sitemap_priority,
-                                view=view)
-                    node_info = PageInfo(label=label,
-                                         node=node,
-                                         lang=language,
-                                         title=title,
-                                         url_part=url_part,
-                                         meta_description=meta_description,
-                                         head_content=head_content,
-                                         partial_url=partial_url,
-                                         content=content,
-                                         url=url)
-                else:
-                    raise MultipleResultsFound('Pages URLs must be unique!')
+                node = Page(enabled=enabled,
+                            hidden=hidden,
+                            parent=parent,
+                            weight=weight,
+                            home=home,
+                            sitemap_priority=sitemap_priority,
+                            view=view)
+                node_info = PageInfo(label=label,
+                                     node=node,
+                                     lang=language,
+                                     title=title,
+                                     url_part=url_part,
+                                     meta_description=meta_description,
+                                     head_content=head_content,
+                                     parent_url=parent_url,
+                                     content=content)
 
             elif type_ == 'InternalLink':
 

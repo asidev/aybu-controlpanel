@@ -126,13 +126,13 @@ class StructuregHandlerFunctionalTests(FunctionalTestsBase):
 
         self.assertNotEqual(old['data'], new['data'])
         self.assertEqual(new['data']['url_part'], 'changed')
-        self.assertEqual(new['data']['partial_url'], '/en')
+        self.assertEqual(new['data']['parent_url'], '/en')
         old['data']['url_part'] = 'changed'
         self.assertEqual(old['data'], new['data'])
 
         child = self.json_get(url='/admin/structure/info.html?id=5',
                               status=200)
         self.success_assert(child)
-        self.assertEqual(child['data']['partial_url'],
-                         '{}/{}'.format(new['data']['partial_url'],
+        self.assertEqual(child['data']['parent_url'],
+                         '{}/{}'.format(new['data']['parent_url'],
                                         new['data']['url_part']))
