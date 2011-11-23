@@ -16,7 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from aybu.core.exc import QuotaError
+from aybu.core.exc import QuotaError, ConstraintError
 from aybu.core.utils.modifiers import urlify
 from aybu.core.models import (Language,
                               Menu,
@@ -419,7 +419,55 @@ class StructureHandler(BaseHandler):
     @action(renderer='json', name='destroy',
             permission=pyramid.security.ALL_PERMISSIONS)
     def delete(self):
-        raise NotImplementedError
+
+        response = copy.deepcopy(self._response)
+
+        try:
+            id_ = int(self.request.params.get('id'))
+            node = Node.get(self.session, id_)
+
+            if isinstance(node, Menu):
+                raise ConstraintError('Menu deletion is not allowed.')
+
+            if Page.count(self.session, (Page.enabled == True,)) < 2:
+                raise ConstraintError('Last Page cannot be deleted.')
+
+            if node.children:
+                # This constraint simplify node deletion:
+                # update of children (weight, parent and urls) is not needed.
+                raise ConstraintError('Cannot delete a Node with children.')
+
+            # FIXME: add constraint!
+            # Cannot delete a PageInfo when it is referred by other PageInfo.
+
+            # FIXME: test Pufferfish to verify files deletion.
+            node.delete()
+
+        except (TypeError, NoResultFound, ConstraintError) as e:
+            log.exception('Bad request params.')
+            self.session.rollback()
+            self.request.response.status = 400
+            response['errors'] = {}
+            response['success'] = False
+            response['errors']['400'] = str(e)
+
+        except Exception as e:
+            log.exception('Unknown Error.')
+            self.session.rollback()
+            self.request.response.status = 500
+            response['errors'] = {}
+            response['success'] = False
+            response['errors']['500'] = str(e)
+
+        else:
+            self.session.commit()
+            self.request.response.status = 200
+            response['errors'] = {}
+            response['dataset'] = [{'id': node.id}]
+            response['dataset_len'] = 1
+            response['success'] = True
+
+        return resource
 
     @action(renderer='json',
             permission=pyramid.security.ALL_PERMISSIONS)
