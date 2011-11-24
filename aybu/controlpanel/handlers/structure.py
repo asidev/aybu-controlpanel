@@ -455,4 +455,53 @@ class StructureHandler(BaseHandler):
     @action(renderer='json',
             permission=pyramid.security.ALL_PERMISSIONS)
     def move(self):
-        raise NotImplementedError
+
+        response = copy.deepcopy(self._response)
+
+        try:
+            # The ID of the node which want be moved.
+            node_id = request.params.get('moved_node_id')
+            if not node_id is None:
+                node_id = int(node_id)
+
+            # The ID of the new parent node.
+            parent_id = request.params.get('new_parent_id')
+            if not parent_id is None:
+                parent_id = int(parent_id)
+
+            # The ID of the previous node of 'node_id' in the new position.
+            previous_node_id = request.params.get('previous_node_id')
+            if not previous_node_id is None:
+                previous_node_id = int(previous_node_id)
+
+            # The ID of the next node of 'node_id' in the new position.
+            # next_node_id = request.params.get('next_node_id')
+            # it is useless due to changes of move operation.
+
+            Node.move(self.session, node_id, parent_id, previous_node_id)
+
+        except (TypeError, NoResultFound, ConstraintError) as e:
+            log.exception('Bad request params.')
+            self.session.rollback()
+            self.request.response.status = 400
+            response['errors'] = {}
+            response['success'] = False
+            response['errors']['400'] = str(e)
+
+        except Exception as e:
+            log.exception('Unknown Error.')
+            self.session.rollback()
+            self.request.response.status = 500
+            response['errors'] = {}
+            response['success'] = False
+            response['errors']['500'] = str(e)
+
+        else:
+            self.session.commit()
+            self.request.response.status = 200
+            response['errors'] = {}
+            response['dataset'] = []
+            response['dataset_len'] = 1
+            response['success'] = True
+
+        return resource
