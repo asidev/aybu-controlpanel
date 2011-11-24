@@ -424,24 +424,7 @@ class StructureHandler(BaseHandler):
 
         try:
             id_ = int(self.request.params.get('id'))
-            node = Node.get(self.session, id_)
-
-            if isinstance(node, Menu):
-                raise ConstraintError('Menu deletion is not allowed.')
-
-            if Page.count(self.session, (Page.enabled == True,)) < 2:
-                raise ConstraintError('Last Page cannot be deleted.')
-
-            if node.children:
-                # This constraint simplify node deletion:
-                # update of children (weight, parent and urls) is not needed.
-                raise ConstraintError('Cannot delete a Node with children.')
-
-            # FIXME: add constraint!
-            # Cannot delete a PageInfo when it is referred by other PageInfo.
-
-            # FIXME: test Pufferfish to verify files deletion.
-            node.delete()
+            Node.delete(self.session, id_)
 
         except (TypeError, NoResultFound, ConstraintError) as e:
             log.exception('Bad request params.')
@@ -463,7 +446,7 @@ class StructureHandler(BaseHandler):
             self.session.commit()
             self.request.response.status = 200
             response['errors'] = {}
-            response['dataset'] = [{'id': node.id}]
+            response['dataset'] = []
             response['dataset_len'] = 1
             response['success'] = True
 
