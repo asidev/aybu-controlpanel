@@ -17,7 +17,9 @@ limitations under the License.
 """
 
 from aybu.controlpanel import main
-from aybu.core.models import populate
+from aybu.core.models import (populate,
+                              engine_from_config_parser,
+                              create_session)
 from webtest import TestApp
 from sqlalchemy.orm import Session
 import ConfigParser
@@ -53,6 +55,8 @@ class FunctionalTestsBase(unittest.TestCase):
         databag = os.path.realpath(os.path.join(os.path.dirname(config),
                                                 os.path.dirname(default_data),
                                                 os.path.basename(default_data)))
+        self.engine = engine_from_config_parser(parser, section)
+        session = create_session(self.engine)()
 
         try:
             with open(databag) as f:
@@ -62,7 +66,8 @@ class FunctionalTestsBase(unittest.TestCase):
             raise Exception("Cannot find data file '%s'" % databag)
 
         else:
-            populate(parser, data, section)
+            populate(parser, data, session)
+            session.close()
 
 
         # Step 5: create webapp

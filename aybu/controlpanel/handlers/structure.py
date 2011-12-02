@@ -371,7 +371,7 @@ class StructureHandler(BaseHandler):
 
             if isinstance(node, Page):
                 node.view = View.get(self.session,
-                                     int(request.params.get('page_type_id')))
+                                     int(self.request.params.get('page_type_id')))
 
             elif isinstance(node, InternalLink):
                 node.linked_to = Node.get(self.session,
@@ -460,17 +460,17 @@ class StructureHandler(BaseHandler):
 
         try:
             # The ID of the node which want be moved.
-            node_id = request.params.get('moved_node_id')
+            node_id = self.request.params.get('moved_node_id')
             if not node_id is None:
                 node_id = int(node_id)
 
             # The ID of the new parent node.
-            parent_id = request.params.get('new_parent_id')
+            parent_id = self.request.params.get('new_parent_id')
             if not parent_id is None:
                 parent_id = int(parent_id)
 
             # The ID of the previous node of 'node_id' in the new position.
-            previous_node_id = request.params.get('previous_node_id')
+            previous_node_id = self.request.params.get('previous_node_id')
             if not previous_node_id is None:
                 previous_node_id = int(previous_node_id)
 
@@ -504,4 +504,4 @@ class StructureHandler(BaseHandler):
             response['dataset_len'] = 1
             response['success'] = True
 
-        return resource
+        return response
