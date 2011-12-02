@@ -181,7 +181,9 @@ class StructureHandler(BaseHandler):
             hidden = self.request.params.get('hidden', 'off')
             hidden = True if hidden.lower() == 'on' else False
             parent = self.request.params.get('parent_id')
-            parent = None if parent is None else Node.get(self.session, parent)
+            if not parent:
+                parent = '1'
+            parent = Node.get(self.session, parent)
             weight = self.request.params.get('weight',
                                              Node.get_max_weight(self.session,
                                                                  parent))
@@ -216,6 +218,8 @@ class StructureHandler(BaseHandler):
                 home = self.request.params.get('home', 'off')
                 home = True if home.lower() == 'on' else False
                 sitemap_priority = self.request.params.get('sitemap_priority')
+                if not sitemap_priority:
+                    sitemap_priority = 1
                 sitemap_priority = int(sitemap_priority)
                 view = self.request.params.get('page_type_id')
                 view = None if view is None else View.get(self.session, view)
