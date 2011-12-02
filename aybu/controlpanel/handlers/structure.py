@@ -81,7 +81,7 @@ class StructureHandler(BaseHandler):
             for page in Page.all(self.session):
                 translation = page.get_translation(language)
                 item = '["{}","{}"]'.format(translation.title.replace('"', "'"),
-                                            translation.url)
+                                            translation.url + '.html')
                 items.append(item)
 
             response = 'var tinyMCELinkList = new Array(%s);' % ', '.join(items)
