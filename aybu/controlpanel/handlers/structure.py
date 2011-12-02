@@ -197,15 +197,6 @@ class StructureHandler(BaseHandler):
             meta_description = self.request.params.get('meta_description')
             head_content = self.request.params.get('head_content')
 
-            if type_ in ('Section', 'Page') and isinstance(parent,
-                                                             (Section, Page)):
-
-                parent_url = parent.get_translation(language).url
-
-            else:
-                parent_url = '/{}'.format(language.lang)
-
-
             if type_ == 'Section':
 
                 node = Section(enabled=enabled,
@@ -218,8 +209,7 @@ class StructureHandler(BaseHandler):
                                         title=title,
                                         url_part=url_part,
                                         meta_description=meta_description,
-                                        head_content=head_content,
-                                        parent_url=parent_url)
+                                        head_content=head_content)
 
             elif type_ == 'Page':
                 # Page attributes.
@@ -250,7 +240,6 @@ class StructureHandler(BaseHandler):
                                      url_part=url_part,
                                      meta_description=meta_description,
                                      head_content=head_content,
-                                     parent_url=parent_url,
                                      content=content)
 
             elif type_ == 'InternalLink':
