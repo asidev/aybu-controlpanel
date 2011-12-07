@@ -15,3 +15,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+
+from aybu.core.testing import FunctionalTestsBase
+from aybu.controlpanel import main
+
+class AybuCPFunctionalTestsBase(FunctionalTestsBase):
+
+    def get_wsgi_app(self):
+        return main({}, **self.config)

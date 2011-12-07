@@ -16,11 +16,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from . base import FunctionalTestsBase
+from . import AybuCPFunctionalTestsBase
 import json
 
 
-class LanguageHandlerFunctionalTests(FunctionalTestsBase):
+class LanguageHandlerFunctionalTests(AybuCPFunctionalTestsBase):
 
 
     def test_enable_disable_language(self):

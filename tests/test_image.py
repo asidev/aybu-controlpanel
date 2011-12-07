@@ -19,7 +19,7 @@ limitations under the License.
 import os
 import pkg_resources
 import shutil
-from . base import FunctionalTestsBase
+from . import AybuCPFunctionalTestsBase
 
 
 class MaxImagesException(Exception):
@@ -30,7 +30,7 @@ class OkException(Exception):
     pass
 
 
-class ImageHandlerFunctionalTests(FunctionalTestsBase):
+class ImageHandlerFunctionalTests(AybuCPFunctionalTestsBase):
 
     def _get_test_file(self, name):
         return os.path.realpath(os.path.join(os.path.dirname(__file__),

@@ -16,13 +16,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from . base import FunctionalTestsBase
+from . import AybuCPFunctionalTestsBase
 import logging
 
 log = logging.getLogger(__name__)
 
 
-class SettingHandlerFunctionalTests(FunctionalTestsBase):
+class SettingHandlerFunctionalTests(AybuCPFunctionalTestsBase):
 
     def json_get(self, url, status):
         return self.testapp.get(url, status=status).json

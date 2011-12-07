@@ -16,10 +16,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from . base import FunctionalTestsBase
+from . import AybuCPFunctionalTestsBase
 
 
-class ViewHandlerFunctionalTests(FunctionalTestsBase):
+class ViewHandlerFunctionalTests(AybuCPFunctionalTestsBase):
 
     def test_list_view(self):
         response = self.testapp.get('/admin/views/list', status=200)

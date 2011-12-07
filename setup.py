@@ -52,6 +52,8 @@ entry_points = """\
 [paste.paster_command]
     aybu-setup = aybu.core.utils.command:SetupApp
     uwsgi = pasteuwsgi.serve:ServeCommand
+[nose.plugins.0.10]
+    aybuconfig = aybu.core.testing:ReadAybuConfigPlugin
 """
 
 paster_plugins = ['pyramid']
