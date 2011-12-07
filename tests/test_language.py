@@ -17,7 +17,6 @@ limitations under the License.
 """
 
 from . import AybuCPFunctionalTestsBase
-import json
 
 
 class LanguageHandlerFunctionalTests(AybuCPFunctionalTestsBase):

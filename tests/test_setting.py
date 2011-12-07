@@ -82,7 +82,7 @@ class SettingHandlerFunctionalTests(AybuCPFunctionalTestsBase):
         self.assertEqual(response['success'], False)
         self.assertNotEqual(response['errors'], {})
 
-    def test_info(self):
+    def test_info1(self):
 
         url = '/admin/settings/info?name=debug'
         response = self.json_get(url=url, status=200)
@@ -93,7 +93,7 @@ class SettingHandlerFunctionalTests(AybuCPFunctionalTestsBase):
         self.base_assert(response)
         self.assertEqual(response['success'], False)
 
-    def test_info(self):
+    def test_info2(self):
 
         url = '/admin/settings/types'
         response = self.json_get(url=url, status=200)
