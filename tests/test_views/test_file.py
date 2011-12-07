@@ -108,8 +108,9 @@ class FileHandlerFunctionalTests(FunctionalTestsBase):
                                      upload_files=[('file', self.sample_file)],
                                      status=200)
 
-
+        self.assertIn('id', response.json)
         new_file_id = response.json['id']
+
 
         # test missing params
         response = self.testapp.post(self.remove_url, params=dict(), status=200)

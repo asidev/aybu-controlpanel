@@ -17,70 +17,58 @@ limitations under the License.
 """
 
 from aybu.controlpanel import main
-from aybu.core.models import (populate,
-                              engine_from_config_parser,
-                              create_session)
+from aybu.core.models import Base, add_default_data, User, Group
 from webtest import TestApp
-from sqlalchemy.orm import Session
-import ConfigParser
+from paste.deploy.loadwsgi import appconfig
+from sqlalchemy import engine_from_config
+from sqlalchemy.orm import sessionmaker, Session
 import json
 import logging
 import os.path
+import pkg_resources
 import unittest
 
 
 class FunctionalTestsBase(unittest.TestCase):
 
-    def setUp(self):
-
-        self.log = logging.getLogger(self.__class__.__name__)
-        # Step 1: open & read config file.
-        parser = ConfigParser.ConfigParser()
+    @classmethod
+    def setUpClass(cls):
+        cls.log = logging.getLogger(cls.__name__)
         config = os.path.realpath(os.path.join(os.path.dirname(__file__),
                                                '..', '..', 'tests.ini'))
-        try:
-            with open(config) as f:
-                parser.readfp(f)
+        cls.config = appconfig('config:{}#aybu-controlpanel'.format(config))
+        cls.engine = engine_from_config(cls.config, prefix='sqlalchemy.')
 
-        except IOError:
-            raise Exception("Cannot find configuration file '%s'" % config)
+    def populate(self):
+        Base.metadata.drop_all(self.engine)
+        Base.metadata.create_all(self.engine)
+        SessionF = sessionmaker(bind=self.engine)
+        session = SessionF()
+        source_ = pkg_resources.resource_stream('aybu.core.data',
+                                                'default_data.json')
+        data = json.loads(source_.read())
+        source_.close()
+        add_default_data(session, data)
+        user = User(username=self.config['default_user.username'],
+                    password=self.config['default_user.password'])
+        session.merge(user)
+        group = Group(name=u'admin')
+        group.users.append(user)
+        session.merge(group)
+        session.commit()
+        session.close()
+        SessionF.close_all()
 
-        # Section of INI file from which read settings.
-        section = 'app:aybu-controlpanel'
-
-        # Step 2: load default data
-        default_data = parser.get(section, 'default_data')
-        self.username = parser.get(section, 'default_user.username')
-        self.password = parser.get(section, 'default_user.password')
-        databag = os.path.realpath(os.path.join(os.path.dirname(config),
-                                                os.path.dirname(default_data),
-                                                os.path.basename(default_data)))
-        self.engine = engine_from_config_parser(parser, section)
-        session = create_session(self.engine)()
-
-        try:
-            with open(databag) as f:
-                data = json.loads(f.read())
-
-        except IOError:
-            raise Exception("Cannot find data file '%s'" % databag)
-
-        else:
-            populate(parser, data, session)
-            session.close()
-
-
-        # Step 5: create webapp
-        settings = {opt: parser.get(section, opt)
-                    for opt in parser.options(section)}
-        app = main({}, **settings)
+    def setUp(self):
+        self.populate()
+        app = main({}, **self.config)
         self.testapp = TestApp(app)
         self.login()
 
     def login(self):
         params = dict(submit='yes',
-                      username=self.username,
-                      password=self.password)
+                      username=self.config['default_user.username'],
+                      password=self.config['default_user.password'])
         response = self.testapp.post('/admin/login.html',
                                      params)
         response = response.follow(status=200)
