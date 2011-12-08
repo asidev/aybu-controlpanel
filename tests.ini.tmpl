@@ -39,10 +39,8 @@ mako.strict_undefined = true
 # mako.module_directory = --> if omitted then memory
 
 
-[pipeline:main]
-# add  egg:WebError#evalerror to the pipeline for debugging
-pipeline =
-    aybu-controlpanel
+[app:main]
+use = aybu-controlpanel
 
 [server:main]
 use = egg:Paste#http
