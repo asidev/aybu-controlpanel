@@ -18,7 +18,7 @@ limitations under the License.
 
 import logging
 from pyramid.httpexceptions import HTTPBadRequest
-from aybu.controlpanel.proxy import Proxy
+from aybu.core.proxy import Proxy
 from aybu.core.models import Language
 
 
