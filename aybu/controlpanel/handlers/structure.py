@@ -23,11 +23,13 @@ from aybu.core.models import (Language,
                               Node,
                               ExternalLink,
                               InternalLink,
+                              MediaCollectionPage,
                               Page,
                               Section,
                               ExternalLinkInfo,
                               InternalLinkInfo,
                               PageInfo,
+                              MediaCollectionPageInfo,
                               SectionInfo,
                               View)
 from pyramid_handlers import action
@@ -213,7 +215,7 @@ class StructureHandler(BaseHandler):
                                         meta_description=meta_description,
                                         head_content=head_content)
 
-            elif type_ == 'Page':
+            elif type_ in ('Page', 'MediaCollectionPage'):
                 # Page attributes.
                 home = self.request.params.get('home', 'off')
                 home = True if home.lower() == 'on' else False
@@ -222,6 +224,10 @@ class StructureHandler(BaseHandler):
                     sitemap_priority = 1
                 sitemap_priority = int(sitemap_priority)
                 view = self.request.params.get('page_type_id')
+                if type_ == 'MediaCollectionPage':
+                    # FIXME:
+                    # add supporto to restrict some views to a specific node.
+                    view = 3
                 view = None if view is None else View.get(self.session, view)
 
                 if not Page.new_page_allowed:
@@ -230,21 +236,28 @@ class StructureHandler(BaseHandler):
                 content = self.request.params.get('content',
                                                   u'<h2>{}</h2>'.format(title))
 
-                node = Page(enabled=enabled,
-                            hidden=hidden,
-                            parent=parent,
-                            weight=weight,
-                            home=home,
-                            sitemap_priority=sitemap_priority,
-                            view=view)
-                node_info = PageInfo(label=label,
-                                     node=node,
-                                     lang=language,
-                                     title=title,
-                                     url_part=url_part,
-                                     meta_description=meta_description,
-                                     head_content=head_content,
-                                     content=content)
+                if type_ == 'Page':
+                    node_cls = Page
+                    nodeinfo_cls = PageInfo
+                elif type_ == 'MediaCollectionPage':
+                    node_cls = MediaCollectionPage
+                    nodeinfo_cls = MediaCollectionPageInfo
+
+                node = node_cls(enabled=enabled,
+                                hidden=hidden,
+                                parent=parent,
+                                weight=weight,
+                                home=home,
+                                sitemap_priority=sitemap_priority,
+                                view=view)
+                node_info = nodeinfo_cls(label=label,
+                                         node=node,
+                                         lang=language,
+                                         title=title,
+                                         url_part=url_part,
+                                         meta_description=meta_description,
+                                         head_content=head_content,
+                                         content=content)
 
             elif type_ == 'InternalLink':
 
@@ -363,8 +376,9 @@ class StructureHandler(BaseHandler):
                 info.url_part = url_part
 
             if isinstance(node, Page):
-                node.view = View.get(self.session,
-                                     int(self.request.params.get('page_type_id')))
+                view_id = int(self.request.params.get('page_type_id',
+                                                      node.view.id))
+                node.view = View.get(self.session, view_id)
 
             elif isinstance(node, InternalLink):
                 node.linked_to = Node.get(self.session,
@@ -443,7 +457,7 @@ class StructureHandler(BaseHandler):
             response['dataset_len'] = 1
             response['success'] = True
 
-        return resource
+        return response
 
     @action(renderer='json',
             permission=pyramid.security.ALL_PERMISSIONS)

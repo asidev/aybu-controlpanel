@@ -92,6 +92,13 @@ class StructuregHandlerFunctionalTests(AybuCPFunctionalTestsBase):
         response = self.json_get(url=url, status=200)
         self.success_assert(response)
 
+        url = '/admin/structure/create.html?type=MediaCollectionPage&parent_id=1&button_label=Hi&sitemap_priority=1&page_type_id=1'
+        response = self.json_get(url=url, status=200)
+        self.success_assert(response)
+        url = '/admin/structure/info.html?id=%s' % response['dataset'][0]['id']
+        response = self.json_get(url=url, status=200)
+        self.success_assert(response)
+
     def test_update(self):
         response = self.json_get(url='/admin/structure/update.html',
                                  status=400)

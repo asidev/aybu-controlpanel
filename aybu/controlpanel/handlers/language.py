@@ -20,13 +20,15 @@ from aybu.core.models import Language
 from aybu.core.exc import QuotaError
 from pyramid_handlers import action
 from . base import BaseHandler
+from sqlalchemy.orm.exc import NoResultFound
 import pyramid.security
-
 
 __all__ = ['LanguageHandler']
 
 
 class LanguageHandler(BaseHandler):
+
+    _response = dict(success=False, msg='', dataset=[], dataset_length=0)
 
     @action(renderer='json',
            permission=pyramid.security.ALL_PERMISSIONS)
@@ -102,3 +104,42 @@ class LanguageHandler(BaseHandler):
 
         finally:
             return dict(success=success, msg=msg)
+
+    @action(renderer='json',
+           permission=pyramid.security.ALL_PERMISSIONS)
+    def search(self):
+
+        response = self._response.copy()
+
+        try:
+            id_ = self.request.params['id']
+            language = Language.get(self.session, id_)
+            language = language.dictify(excludes=('__class__'))
+
+        except KeyError as e:
+            self.log.exception('Not ID param in the request.')
+            self.session.rollback()
+            self.request.response.status = 400
+            response['msg'] = self.request.translate("Missing parameter: 'id'.")
+
+        except NoResultFound as e:
+            self.log.exception('No Language: %s.', id_)
+            self.session.rollback()
+            self.request.response.status = 404
+            response['msg'] = self.request.translate("No Language found.")
+
+        except Exception as e:
+            self.log.exception('Uknown error.')
+            self.session.rollback()
+            self.request.response.status = 500
+            response['msg'] = str(e)
+
+        else:
+            self.session.commit()
+            response['success'] = True
+            response['dataset'] = [language]
+            response['dataset_length'] = len(response['dataset'])
+            response['msg'] = self.request.translate("Language found.")
+
+        finally:
+            return response
