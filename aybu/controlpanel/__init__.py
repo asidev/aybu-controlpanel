@@ -73,6 +73,18 @@ def includeme(config):
 
 def add_handlers(config):
 
+    config.add_handler('MediaItemPage.create', '/admin/MediaItemPage',
+                       handler='aybu.controlpanel.handlers.MediaItemPageHandler',
+                       factory='aybu.core.authentication.Authenticated',
+                       request_method='POST',
+                       action='create')
+
+    config.add_handler('MediaItemPage.search', '/admin/MediaItemPage',
+                       handler='aybu.controlpanel.handlers.MediaItemPageHandler',
+                       factory='aybu.core.authentication.Authenticated',
+                       request_method='GET',
+                       action='search')
+
     config.add_handler('MediaCollection.create', '/admin/MediaCollection/create',
                        handler='aybu.controlpanel.handlers.MediaCollectionHandler',
                        factory='aybu.core.authentication.Authenticated',
