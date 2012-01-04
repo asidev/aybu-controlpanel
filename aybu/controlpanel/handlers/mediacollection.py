@@ -16,9 +16,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from aybu.core.models import (MediaCollectionPageInfo,
+from aybu.core.exc import QuotaError, ConstraintError
+from aybu.core.models import (Node,
+                              MediaCollectionPageInfo,
                               MediaItemPage,
-                              MediaItemPageInfo)
+                              MediaItemPageInfo,
+                              View)
+from aybu.core.utils.modifiers import urlify
 from pyramid_handlers import action
 from . base import BaseHandler
 from sqlalchemy.orm.exc import NoResultFound
@@ -97,15 +101,70 @@ class MediaItemPageHandler(BaseHandler):
         response = self._response.copy()
 
         try:
+
+            if not MediaItemPage.new_page_allowed:
+                raise QuotaError('New pages are not allowed.')
+
+            # Convert JSON request param into dictionary.
             params = json.loads(self.request.params['dataset'])
+
             parent_url = urlparse(params['parent_url']).path
             if parent_url.startswith('/admin'):
                 parent_url = parent_url.replace('/admin', '', 1)
-            info = MediaCollectionPageInfo.get_by_url(self.session, parent_url)
-            item = MediaItemPage(label=params['label'],
-                                 content=params['content'],
-                                 parent_id=info.node.id,
-                                 file_id=int(params['file_id']))
+
+            node_info = MediaCollectionPageInfo.get_by_url(self.session,
+                                                           parent_url)
+
+            # Node attributes.
+            enabled = params.get('enabled', 'off')
+            enabled = True if enabled.lower() == 'on' else False
+            hidden = params.get('hidden', 'off')
+            hidden = True if hidden.lower() == 'on' else False
+            max_weight = Node.get_max_weight(self.session, node_info.node)
+            weight = params.get('weight', max_weight)
+            self.log.debug(max_weight)
+            weight = int(weight) + 1
+            # Page attributes.
+            home = params.get('home', 'off')
+            home = True if home.lower() == 'on' else False
+            sitemap_priority = params.get('sitemap_priority')
+            sitemap_priority = int(sitemap_priority) if sitemap_priority else 1
+            # FIXME: add the right view needed by MediaItemPage rendering.
+            view = View.get(self.session, 1)
+
+            node = MediaItemPage(enabled=enabled,
+                                 hidden=hidden,
+                                 parent=node_info.node,
+                                 weight=weight,
+                                 home=home,
+                                 sitemap_priority=sitemap_priority,
+                                 view=view)
+
+            # NodeInfo attributes
+            translations = params.get('translations')
+            label = translations['label']
+            language = self.request.language
+            # CommonInfo attributes.
+            title = translations.get('title', label)
+            url_part = translations.get('url_part', title).strip()
+            url_part = urlify(url_part)
+            meta_description = translations.get('meta_description')
+            head_content = translations.get('head_content')
+            # Page attributes.
+            content = translations.get('content', u'<h2>No Content.</h2>')
+
+            node_info = MediaItemPageInfo(label=label,
+                                          node=node,
+                                          lang=language,
+                                          title=title,
+                                          url_part=url_part,
+                                          meta_description=meta_description,
+                                          head_content=head_content,
+                                          content=content)
+
+            self.session.add(node)
+            self.session.add(node_info)
+            node_info.translate(enabled_only=True)
 
         except KeyError as e:
             self.log.exception('Missing params in the request.')
@@ -113,15 +172,23 @@ class MediaItemPageHandler(BaseHandler):
             self.request.response.status = 400
             response['msg'] = self.request.translate("Missing parameters.")
 
+        except QuotaError as e:
+            log.exception('Quota Error.')
+            self.session.rollback()
+            self.request.response.status = 500
+            response['errors'] = {}
+            response['success'] = False
+            response['errors']['500'] = 'Maximum pages number reached.'
+
         except NoResultFound as e:
-            msg = "No MediaItemPageInfo found: %s" % url
+            msg = "No MediaCollectionPageInfo found: %s" % url
             self.log.exception(msg)
             self.session.rollback()
             self.request.response.status = 404
             response['msg'] = self.request.translate(msg)
 
         except Exception as e:
-            self.log.exception('Uknown error.')
+            self.log.exception('Unknown error.')
             self.session.rollback()
             self.request.response.status = 500
             response['msg'] = str(e)
@@ -147,7 +214,13 @@ class MediaItemPageHandler(BaseHandler):
             if parent_url.startswith('/admin'):
                 parent_url = parent_url.replace('/admin', '', 1)
             info = MediaCollectionPageInfo.get_by_url(self.session, parent_url)
-            items = [item.dictify() for item in info.node.children]
+            items = []
+            for item in info.node.children:
+                dictified = item.dictify()
+                dictified['translations'] = [t.dictify()
+                                             for t in item.translations
+                                             if t.lang == self.request.language]
+                items.append(dictified)
 
         except KeyError as e:
             self.log.exception('Not URL param in the request.')
@@ -156,14 +229,14 @@ class MediaItemPageHandler(BaseHandler):
             response['msg'] = self.request.translate("Missing parameter: 'url'.")
 
         except NoResultFound as e:
-            msg = "No MediaItemPageInfo found: %s" % url
+            msg = "No MediaPageInfo found: %s" % url
             self.log.exception(msg)
             self.session.rollback()
             self.request.response.status = 404
             response['msg'] = self.request.translate(msg)
 
         except Exception as e:
-            self.log.exception('Uknown error.')
+            self.log.exception('Unknown error.')
             self.session.rollback()
             self.request.response.status = 500
             response['msg'] = str(e)
