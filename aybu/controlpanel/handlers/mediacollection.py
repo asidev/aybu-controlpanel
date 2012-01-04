@@ -18,6 +18,7 @@ limitations under the License.
 
 from aybu.core.exc import QuotaError, ConstraintError
 from aybu.core.models import (Node,
+                              MediaCollectionPage,
                               MediaCollectionPageInfo,
                               MediaItemPage,
                               MediaItemPageInfo,
@@ -31,47 +32,36 @@ from urlparse import urlparse
 import json
 
 
-__all__ = ['MediaCollectionHandler']
+__all__ = ['MediaCollectionPageHandler']
 
 
-class MediaCollectionHandler(BaseHandler): pass
-"""
+class MediaCollectionPageHandler(BaseHandler):
+
     _response = dict(success=False, msg='', dataset=[], dataset_length=0)
 
-    @action(renderer='json',
+    @action(renderer='/plugins/mediacollection/collection_items.mako',
             permission=pyramid.security.ALL_PERMISSIONS)
-    def create(self):
+    def show_html_view(self):
 
-        response = self._response.copy()
+        response = dict(language=self.request.language,
+                        items=[])
 
         try:
-            page_id = self.request.params['page_id']
-            self.log.debug('Page ID found: %s.', page_id)
-            page = Page.get(self.session, page_id)
-            self.log.debug('Page found: %s.', page)
-            label = self.request.params['label']
-            caption = self.request.params.get('caption')
-            file_ = self.request.params.get('file')
-            language = self.request.language
-            collection = MediaCollection(page=page)
-            self.session.add(collection)
-            collection_info = MediaCollectionInfo(label=label,
-                                                  caption=caption,
-                                                  node=collection)
-            self.session.add(collection_info)
-            self.log.debug(collection)
+            collection = MediaCollectionPage.get(self.session,
+                                                 self.request.matchdict['id'])
 
         except KeyError as e:
-            self.log.exception('Bad request.')
+            self.log.exception('Missing params in the request.')
             self.session.rollback()
             self.request.response.status = 400
-            response['msg'] = self.request.translate("One or more parameters missing.")
+            response['msg'] = self.request.translate("Missing parameters.")
 
         except NoResultFound as e:
-            self.log.exception('No Page: %s.', page_id)
+            msg = "No MediaCollectionPage found."
+            self.log.exception(msg)
             self.session.rollback()
             self.request.response.status = 404
-            response['msg'] = self.request.translate("No Page found.")
+            response['msg'] = self.request.translate(msg)
 
         except Exception as e:
             self.log.exception('Unknown error.')
@@ -81,14 +71,11 @@ class MediaCollectionHandler(BaseHandler): pass
 
         else:
             self.session.commit()
-            response['success'] = True
-            response['dataset'] = []#[collection]
-            response['dataset_length'] = len(response['dataset'])
-            response['msg'] = self.request.translate("Language found.")
+            response['items'] = collection.children
 
         finally:
             return response
-"""
+
 
 class MediaItemPageHandler(BaseHandler):
 
@@ -131,6 +118,7 @@ class MediaItemPageHandler(BaseHandler):
             sitemap_priority = int(sitemap_priority) if sitemap_priority else 1
             # FIXME: add the right view needed by MediaItemPage rendering.
             view = View.get(self.session, 1)
+            file_id = params.get('file', {}).get('id')
 
             node = MediaItemPage(enabled=enabled,
                                  hidden=hidden,
@@ -138,9 +126,10 @@ class MediaItemPageHandler(BaseHandler):
                                  weight=weight,
                                  home=home,
                                  sitemap_priority=sitemap_priority,
-                                 view=view)
+                                 view=view,
+                                 file_id=file_id)
 
-            # NodeInfo attributes
+            # NodeInfo attributes.
             translations = params.get('translations')
             label = translations['label']
             language = self.request.language
@@ -217,6 +206,9 @@ class MediaItemPageHandler(BaseHandler):
             items = []
             for item in info.node.children:
                 dictified = item.dictify()
+                dictified['file'] = {}
+                if not item.file is None:
+                    dictified['file'] = item.file.to_dict()
                 dictified['translations'] = [t.dictify()
                                              for t in item.translations
                                              if t.lang == self.request.language]
