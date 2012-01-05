@@ -73,6 +73,12 @@ def includeme(config):
 
 def add_handlers(config):
 
+    config.add_handler('MediaItemPage.delete', '/admin/mediaitempage/{id}',
+                       handler='aybu.controlpanel.handlers.MediaItemPageHandler',
+                       factory='aybu.core.authentication.Authenticated',
+                       request_method='DELETE',
+                       action='delete')
+
     config.add_handler('MediaItemPage.create', '/admin/mediaitempage',
                        handler='aybu.controlpanel.handlers.MediaItemPageHandler',
                        factory='aybu.core.authentication.Authenticated',

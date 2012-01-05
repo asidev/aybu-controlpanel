@@ -29,6 +29,7 @@ from . base import BaseHandler
 from sqlalchemy.orm.exc import NoResultFound
 import pyramid.security
 from urlparse import urlparse
+import collections
 import json
 
 
@@ -81,19 +82,7 @@ class MediaItemPageHandler(BaseHandler):
 
     _response = dict(success=False, msg='', dataset=[], dataset_length=0)
 
-    @action(renderer='json',
-            permission=pyramid.security.ALL_PERMISSIONS)
-    def create(self):
-
-        response = self._response.copy()
-
-        try:
-
-            if not MediaItemPage.new_page_allowed:
-                raise QuotaError('New pages are not allowed.')
-
-            # Convert JSON request param into dictionary.
-            params = json.loads(self.request.params['dataset'])
+    def _create(self, params):
 
             parent_url = urlparse(params['parent_url']).path
             if parent_url.startswith('/admin'):
@@ -155,6 +144,36 @@ class MediaItemPageHandler(BaseHandler):
             self.session.add(node_info)
             node_info.translate(enabled_only=True)
 
+            return node
+
+    @action(renderer='json',
+            permission=pyramid.security.ALL_PERMISSIONS)
+    def create(self):
+
+        response = self._response.copy()
+
+        try:
+
+            if not MediaItemPage.new_page_allowed:
+                raise QuotaError('New pages are not allowed.')
+
+            # Convert JSON request param into dictionary.
+            params = json.loads(self.request.params['dataset'])
+            if not isinstance(params, collections.Sequence):
+                params = [params]
+
+            items = []
+            for param in params:
+                item = self._create(param)
+                dictified = item.dictify()
+                dictified['file'] = {}
+                if not item.file is None:
+                    dictified['file'] = item.file.to_dict()
+                dictified['translations'] = [t.dictify()
+                                             for t in item.translations
+                                             if t.lang == self.request.language]
+                items.append(dictified)
+
         except KeyError as e:
             self.log.exception('Missing params in the request.')
             self.session.rollback()
@@ -170,7 +189,7 @@ class MediaItemPageHandler(BaseHandler):
             response['errors']['500'] = 'Maximum pages number reached.'
 
         except NoResultFound as e:
-            msg = "No MediaCollectionPageInfo found: %s" % url
+            msg = "No MediaCollectionPageInfo found."
             self.log.exception(msg)
             self.session.rollback()
             self.request.response.status = 404
@@ -185,7 +204,7 @@ class MediaItemPageHandler(BaseHandler):
         else:
             self.session.commit()
             response['success'] = True
-            response['dataset'] = [item]
+            response['dataset'] = items
             response['dataset_length'] = len(response['dataset'])
             response['msg'] = self.request.translate("MediaItemPageInfo found.")
 
@@ -239,6 +258,45 @@ class MediaItemPageHandler(BaseHandler):
             response['dataset'] = items
             response['dataset_length'] = len(response['dataset'])
             response['msg'] = self.request.translate("MediaItemPageInfo found.")
+
+        finally:
+            return response
+
+    @action(renderer='json',
+            permission=pyramid.security.ALL_PERMISSIONS)
+    def delete(self):
+
+        response = self._response.copy()
+
+        try:
+            id_ = self.request.matchdict['id']
+            MediaItemPage.delete(self.session, id_)
+
+        except KeyError as e:
+            self.log.exception('Not ID param in the request.')
+            self.session.rollback()
+            self.request.response.status = 400
+            response['msg'] = self.request.translate("Missing parameter: 'id'.")
+
+        except NoResultFound as e:
+            msg = "No MediaItemPage found: %s" % id_
+            self.log.exception(msg)
+            self.session.rollback()
+            self.request.response.status = 404
+            response['msg'] = self.request.translate(msg)
+
+        except Exception as e:
+            self.log.exception('Unknown error.')
+            self.session.rollback()
+            self.request.response.status = 500
+            response['msg'] = str(e)
+
+        else:
+            self.session.commit()
+            response['success'] = True
+            response['dataset'] = [id_]
+            response['dataset_length'] = len(response['dataset'])
+            response['msg'] = self.request.translate("MediaItemPage found.")
 
         finally:
             return response
