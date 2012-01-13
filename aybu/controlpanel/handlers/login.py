@@ -47,8 +47,7 @@ class LoginHandler(BaseHandler):
             password = self.request.params['password']
             User.check(self.request.db_session, username, password)
 
-        except:
-            self.log.exception('Invalid Login')
+        except ValueError:
             message = u'Username o password non validi'
             res['message'] = self.request.translate(message)
             self.request.response.status_int = 400
