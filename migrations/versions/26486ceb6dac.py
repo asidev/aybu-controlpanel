@@ -11,7 +11,6 @@ down_revision = None
 
 from alembic import op
 import sqlalchemy as sa
-from aybu.core.models.types import Crypt
 
 
 def upgrade():
@@ -74,7 +73,7 @@ def upgrade():
 
     op.create_table('users',
         sa.Column('username', sa.Unicode(length=255), nullable=False),
-        sa.Column('password', Crypt(), nullable=False),
+        sa.Column('password', sa.Unicode(length=95), nullable=False),
         sa.PrimaryKeyConstraint('username')
     )
 
