@@ -146,13 +146,12 @@ class ImageHandler(BaseHandler):
     @action(renderer='json',
            permission=pyramid.security.ALL_PERMISSIONS)
     def list(self):
-        count = Image.count(self.session)
-        self.res = {"datalen": count}
-        self.res['data'] = []
-        for img in Image.all(self.session):
-            d = img.to_dict(ref_pages=True)
-            self.res['data'].append(d)
-
+        self.res = {
+            'data': [img.to_dict(ref_pages=True)
+                     for img in Image.all(self.session)],
+            'success': True,
+        }
+        self.res['datalen'] = len(self.res['data'])
         return self.res
 
     @action(renderer='/admin/imagemanager/template.mako',
