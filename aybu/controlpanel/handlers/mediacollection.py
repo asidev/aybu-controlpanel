@@ -40,7 +40,7 @@ class MediaCollectionPageHandler(BaseHandler):
 
     _response = dict(success=False, msg='', dataset=[], dataset_length=0)
 
-    @action(renderer='/plugins/mediacollection/collection_items.mako',
+    @action(renderer='/plugins/mediacollection/mediacollectionpage.mako',
             permission=pyramid.security.ALL_PERMISSIONS)
     def show_html_view(self):
 
@@ -72,7 +72,7 @@ class MediaCollectionPageHandler(BaseHandler):
 
         else:
             self.session.commit()
-            response['items'] = collection.children
+            response['node'] = collection
 
         finally:
             return response
@@ -92,13 +92,13 @@ class MediaItemPageHandler(BaseHandler):
                                                            parent_url)
 
             # Node attributes.
-            enabled = params.get('enabled', 'off')
+            enabled = params.get('enabled', 'on')
             enabled = True if enabled.lower() == 'on' else False
             hidden = params.get('hidden', 'off')
             hidden = True if hidden.lower() == 'on' else False
             max_weight = Node.get_max_weight(self.session, node_info.node)
             weight = params.get('weight', max_weight)
-            self.log.debug(max_weight)
+            #self.log.debug(max_weight)
             weight = int(weight) + 1
             # Page attributes.
             home = params.get('home', 'off')
@@ -119,17 +119,17 @@ class MediaItemPageHandler(BaseHandler):
                                  file_id=file_id)
 
             # NodeInfo attributes.
-            translations = params.get('translations')
-            label = translations['label']
+            translation = params.get('translations')[0]
+            label = translation['label']
             language = self.request.language
             # CommonInfo attributes.
-            title = translations.get('title', label)
-            url_part = translations.get('url_part', title).strip()
+            title = translation.get('title', label)
+            url_part = translation.get('url_part', title).strip()
             url_part = urlify(url_part)
-            meta_description = translations.get('meta_description')
-            head_content = translations.get('head_content')
+            meta_description = translation.get('meta_description')
+            head_content = translation.get('head_content')
             # Page attributes.
-            content = translations.get('content', u'<h2>No Content.</h2>')
+            content = translation.get('content', '')
 
             node_info = MediaItemPageInfo(label=label,
                                           node=node,
@@ -297,6 +297,53 @@ class MediaItemPageHandler(BaseHandler):
             response['dataset'] = [id_]
             response['dataset_length'] = len(response['dataset'])
             response['msg'] = self.request.translate("MediaItemPage found.")
+
+        finally:
+            return response
+
+    @action(renderer='json',
+            permission=pyramid.security.ALL_PERMISSIONS)
+    def update(self):
+
+        response = self._response.copy()
+
+        try:
+            id_ = self.request.matchdict['id']
+            MediaItemPage.get(self.session, id_)
+            # Convert JSON request param into dictionary.
+            params = json.loads(self.request.params['dataset'])
+            translation = params['translations'][0]
+            info = MediaItemPageInfo.get(self.session, translation['id'])
+            info.label = translation['label']
+            info.title = info.label
+            info.url_part = urlify(info.title)
+            info.content = translation['content']
+
+        except KeyError as e:
+            self.log.exception('Not ID param in the request.')
+            self.session.rollback()
+            self.request.response.status = 400
+            response['msg'] = self.request.translate("Missing parameter: 'id'.")
+
+        except NoResultFound as e:
+            msg = "No MediaItemPage found: %s" % id_
+            self.log.exception(msg)
+            self.session.rollback()
+            self.request.response.status = 404
+            response['msg'] = self.request.translate(msg)
+
+        except Exception as e:
+            self.log.exception('Unknown error.')
+            self.session.rollback()
+            self.request.response.status = 500
+            response['msg'] = str(e)
+
+        else:
+            self.session.commit()
+            response['success'] = True
+            response['dataset'] = [id_]
+            response['dataset_length'] = len(response['dataset'])
+            response['msg'] = self.request.translate("MediaItemPage updated.")
 
         finally:
             return response

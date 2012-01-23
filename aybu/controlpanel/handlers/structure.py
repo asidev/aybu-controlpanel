@@ -431,7 +431,9 @@ class StructureHandler(BaseHandler):
 
         try:
             id_ = int(self.request.params.get('id'))
-            Node.delete(self.session, id_)
+            #FIXME: check why delete using Mapper doesn't work.
+            #Node.delete(self.session, id_)
+            self.session.query(Node).filter(Node.id == id_).delete()
 
         except (TypeError, NoResultFound, ConstraintError) as e:
             log.exception('Bad request params.')
