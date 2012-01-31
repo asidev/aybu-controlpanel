@@ -16,7 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from aybu.core.exc import QuotaError, ConstraintError
+from aybu.core.exc import QuotaError
 from aybu.core.models import (Node,
                               MediaCollectionPage,
                               MediaCollectionPageInfo,
@@ -181,7 +181,7 @@ class MediaItemPageHandler(BaseHandler):
             response['msg'] = self.request.translate("Missing parameters.")
 
         except QuotaError as e:
-            log.exception('Quota Error.')
+            self.log.exception('Quota Error.')
             self.session.rollback()
             self.request.response.status = 500
             response['errors'] = {}
@@ -240,7 +240,7 @@ class MediaItemPageHandler(BaseHandler):
             response['msg'] = self.request.translate("Missing parameter: 'url'.")
 
         except NoResultFound as e:
-            msg = "No MediaPageInfo found: %s" % url
+            msg = "No MediaPageInfo found: %s" % parent_url
             self.log.exception(msg)
             self.session.rollback()
             self.request.response.status = 404
