@@ -16,20 +16,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from aybu.core.request import Request
-from aybu.core.models import Base
-import aybu.website
-from aybu.website.resources import get_root_resource
-from aybu.core.authentication import AuthenticationPolicy
-from pyramid.config import Configurator
-from pyramid_beaker import session_factory_from_settings
-from pyramid.httpexceptions import HTTPForbidden
-from sqlalchemy import engine_from_config
-import logging
-import pyramid.security
+try:
+    from aybu.core.request import Request
+    from aybu.core.models import Base
+    import aybu.website
+    from aybu.website.resources import get_root_resource
+    from aybu.core.authentication import AuthenticationPolicy
+    from pyramid.config import Configurator
+    from pyramid_beaker import session_factory_from_settings
+    from pyramid.httpexceptions import HTTPForbidden
+    from sqlalchemy import engine_from_config
+    import logging
+    import pyramid.security
+    log = logging.getLogger(__name__)
+except ImportError:
+    pass
 
-
-log = logging.getLogger(__name__)
 __version__ = (0, 1, 0, 'dev', 0)
 
 
