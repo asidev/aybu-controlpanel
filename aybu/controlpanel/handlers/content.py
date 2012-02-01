@@ -49,21 +49,28 @@ class ContentHandler(BaseHandler):
         return res
 
     def prepare_response(self, status, message, page=None):
-        self.request.response.status_int = status
-        if status == 200:
-            self.session.commit()
-            self.proxy.invalidate(url=page.url)
+        try:
+            self.request.response.status_int = status
+            if status == 200:
+                self.session.commit()
+                self.proxy.invalidate(url=page.url)
 
-        else:
-            self.session.rollback()
-            self.log.debug(message)
+            else:
+                self.session.rollback()
+                self.log.debug(message)
 
-        return self.request.translate(message)
+        except Exception as e:
+            self.log.exception("Error in prepare_response")
+            return str(e)
+
+        finally:
+            return self.request.translate(message)
 
     @action(renderer='json',
            permission=pyramid.security.ALL_PERMISSIONS)
     def edit(self):
         try:
+            message = "UNDEFINED"
             pageinfo = PageInfo.get(self.session,
                                     self.request.params['translation_id'])
             html = self.request.params['translation_html']
