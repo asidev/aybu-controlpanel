@@ -480,7 +480,9 @@ class StructureHandler(BaseHandler):
 
             # The ID of the previous node of 'node_id' in the new position.
             previous_node_id = self.request.params.get('previous_node_id')
-            if not previous_node_id is None:
+            if previous_node_id == '':
+                previous_node_id = None
+            elif not previous_node_id is None:
                 previous_node_id = int(previous_node_id)
 
             # The ID of the next node of 'node_id' in the new position.
