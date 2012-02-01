@@ -61,6 +61,7 @@ class ContentHandler(BaseHandler):
 
         except Exception as e:
             self.log.exception("Error in prepare_response")
+            self.request.response.status_int = 500
             return str(e)
 
         finally:
