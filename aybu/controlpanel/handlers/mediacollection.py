@@ -87,6 +87,7 @@ class MediaItemPageHandler(BaseHandler):
             parent_url = urlparse(params['parent_url']).path
             if parent_url.startswith('/admin'):
                 parent_url = parent_url.replace('/admin', '', 1)
+            parent_url = parent_url.rsplit('.', 1)[0]
 
             node_info = MediaCollectionPageInfo.get_by_url(self.session,
                                                            parent_url)
@@ -221,6 +222,8 @@ class MediaItemPageHandler(BaseHandler):
             parent_url = urlparse(self.request.params['parent_url']).path
             if parent_url.startswith('/admin'):
                 parent_url = parent_url.replace('/admin', '', 1)
+
+            parent_url = parent_url.rsplit('.', 1)[0]
             info = MediaCollectionPageInfo.get_by_url(self.session, parent_url)
             items = []
             for item in info.node.children:
