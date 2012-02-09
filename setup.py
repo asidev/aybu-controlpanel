@@ -51,6 +51,9 @@ entry_points = """\
     main = aybu.controlpanel:main
 [paste.paster_command]
     aybu-setup = aybu.core.utils.command:SetupApp
+    aybu-convert = aybu.core.utils.command:Convert
+    aybu-import = aybu.core.utils.command:Import
+    aybu-export = aybu.core.utils.command:Export
     uwsgi = pasteuwsgi.serve:ServeCommand
 [nose.plugins.0.10]
     aybuconfig = aybu.core.testing:ReadAybuConfigPlugin
