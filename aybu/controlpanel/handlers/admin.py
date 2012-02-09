@@ -22,8 +22,6 @@ from aybu.core.models import (Language,
                               PageInfo,
                               Page,
                               Banner,
-                              User,
-                              Logo,
                               Setting)
 from aybu.core.utils.modifiers import urlify
 from . base import BaseHandler
@@ -57,11 +55,12 @@ class AdminHandler(BaseHandler):
                                                      repeat_password=''))
 
         if not self.request.params.get('submitted'):
-           return res
+            return res
 
         res['success'] = False
         try:
-            self.request.user.check_password(self.request.params['old_password'])
+            self.request.user.check_password(
+                                        self.request.params['old_password'])
 
         except ValueError:
             msg = self.request.translate(u'Vecchia password non corretta')
@@ -215,7 +214,8 @@ class AdminHandler(BaseHandler):
                         obj.delete()
                     cls(name=filename, source=source.file,
                         session=self.session, default=True)
-                    message = u'{} aggiornato con successo'.format(name.title())
+                    message = u'{} aggiornato con successo'\
+                                                        .format(name.title())
                     messages[key] = self.request.translate(message)
                     purge_all = True
                     commit = True
