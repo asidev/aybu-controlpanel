@@ -16,7 +16,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from aybu.core.models import Page, User
+from aybu.core.models import (User,
+                              Page,
+                              RemoteUser)
 from pyramid_handlers import action
 from pyramid.httpexceptions import HTTPFound
 from . base import BaseHandler
@@ -37,15 +39,21 @@ class LoginHandler(BaseHandler):
         res = dict(message=None, page='login')
         if self.request.params.get('submit') is None:
             if not self.request.user is None:
-                return HTTPFound(location=self.request.route_url('admin',
-                                                                 action='index'))
+                return HTTPFound(location=self.request\
+                                         .route_url('admin', action='index'))
             else:
                 return res
 
         try:
             username = self.request.params['username']
             password = self.request.params['password']
-            User.check(self.request.db_session, username, password)
+            self.log.info("Trying login for username %s", username)
+
+            remote = self.request.registry.settings.get('remote_login_url')
+            if remote:
+                RemoteUser.check(self.request, username, password)
+            else:
+                User.check(self.request.db_session, username, password)
 
         except ValueError:
             message = u'Username o password non validi'
