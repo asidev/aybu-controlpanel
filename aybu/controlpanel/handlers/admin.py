@@ -23,6 +23,7 @@ from aybu.core.models import (Language,
                               Page,
                               Banner,
                               Setting)
+from aybu.core.models import Logo  # this is used by a lookup on globals()
 from aybu.core.utils.modifiers import urlify
 from . base import BaseHandler
 
