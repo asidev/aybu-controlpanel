@@ -51,9 +51,10 @@ class LoginHandler(BaseHandler):
 
             remote = self.request.registry.settings.get('remote_login_url')
             if remote:
-                RemoteUser.check(self.request, username, password)
+                userobj = RemoteUser.check(self.request, username, password)
             else:
-                User.check(self.request.db_session, username, password)
+                userobj = User.check(self.request.db_session,
+                                     username, password)
 
         except ValueError:
             message = u'Username o password non validi'
@@ -63,6 +64,7 @@ class LoginHandler(BaseHandler):
 
         else:
             pyramid.security.remember(self.request, username)
+            self.request.session['_user'] = userobj
             return HTTPFound(location=self.request.route_url('admin',
                                                              action="index"))
 
