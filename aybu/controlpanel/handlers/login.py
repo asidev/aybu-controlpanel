@@ -43,7 +43,6 @@ class LoginHandler(BaseHandler):
                                          .route_url('admin', action='index'))
             else:
                 return res
-
         try:
             username = self.request.params['username']
             password = self.request.params['password']
