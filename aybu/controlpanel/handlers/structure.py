@@ -157,7 +157,9 @@ class StructureHandler(BaseHandler):
             self.request.response.status = 500
 
         else:
-            response['data'] = translation.to_dict()
+            dict_ = translation.to_dict()
+            dict_['home'] = node.home
+            response['data'] = dict_
             response['datalen'] = 1
             response['success'] = True
             response['message'] = 'Information retrieved.'
@@ -217,8 +219,6 @@ class StructureHandler(BaseHandler):
 
             elif type_ in ('Page', 'MediaCollectionPage'):
                 # Page attributes.
-                home = self.request.params.get('home', 'off')
-                home = True if home.lower() == 'on' else False
                 sitemap_priority = self.request.params.get('sitemap_priority')
                 if not sitemap_priority:
                     sitemap_priority = 1
@@ -229,7 +229,9 @@ class StructureHandler(BaseHandler):
                     # add supporto to restrict some views to a specific node.
                     view = View.get_by_name(self.session,
                                             'MEDIA COLLECTION')
-                view = view[0] if view else None
+                    view = view[0] if view else None
+                else:
+                    view = View.get(self.session, view)
 
                 if not Page.new_page_allowed:
                     raise QuotaError('New pages are not allowed.')
@@ -248,7 +250,6 @@ class StructureHandler(BaseHandler):
                                 hidden=hidden,
                                 parent=parent,
                                 weight=weight,
-                                home=home,
                                 sitemap_priority=sitemap_priority,
                                 view=view)
                 node_info = nodeinfo_cls(label=label,
@@ -292,6 +293,12 @@ class StructureHandler(BaseHandler):
             self.session.add(node)
             self.session.add(node_info)
             node_info.translate(enabled_only=True)
+            self.session.flush()
+            if type_ == 'Page':
+                home = self.request.params.get('home', 'off')
+                home = True if home.lower() == 'on' else False
+                if home:
+                    Page.set_homepage(self.session, node)
 
         except NotImplementedError as e:
             log.exception('Not Implemented.')
@@ -377,6 +384,10 @@ class StructureHandler(BaseHandler):
                 info.url_part = url_part
 
             if isinstance(node, Page):
+                home = self.request.params.get('home', '')
+                home = True if home.lower() == 'on' else False
+                if home:
+                    Page.set_homepage(self.session, node)
                 view_id = int(self.request.params.get('page_type_id',
                                                       node.view.id))
                 node.view = View.get(self.session, view_id)
