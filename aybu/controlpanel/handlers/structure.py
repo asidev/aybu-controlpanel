@@ -158,7 +158,8 @@ class StructureHandler(BaseHandler):
 
         else:
             dict_ = translation.to_dict()
-            dict_['home'] = node.home
+            if hasattr(node, 'home'):
+                dict_['home'] = node.home
             response['data'] = dict_
             response['datalen'] = 1
             response['success'] = True
