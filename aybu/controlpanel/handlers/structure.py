@@ -227,8 +227,9 @@ class StructureHandler(BaseHandler):
                 if type_ == 'MediaCollectionPage':
                     # FIXME:
                     # add supporto to restrict some views to a specific node.
-                    view = 3
-                view = None if view is None else View.get(self.session, view)
+                    view = View.get_by_name(self.session,
+                                            'MEDIA COLLECTION')
+                view = view[0] if view else None
 
                 if not Page.new_page_allowed:
                     raise QuotaError('New pages are not allowed.')
