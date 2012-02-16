@@ -158,8 +158,10 @@ class StructureHandler(BaseHandler):
 
         else:
             dict_ = translation.to_dict()
-            if hasattr(node, 'home'):
+            try:
                 dict_['home'] = node.home
+            except:
+                pass
             response['data'] = dict_
             response['datalen'] = 1
             response['success'] = True
