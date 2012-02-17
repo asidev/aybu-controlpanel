@@ -446,30 +446,35 @@ class StructureHandler(BaseHandler):
 
         try:
             id_ = int(self.request.params.get('id'))
-            #FIXME: check why delete using Mapper doesn't work.
-            #Node.delete(self.session, id_)
-            self.session.query(Node).filter(Node.id == id_).delete()
+            Node.remove(self.session, id_)
 
         except (TypeError, NoResultFound, ConstraintError) as e:
             log.exception('Bad request params.')
             self.session.rollback()
             self.request.response.status = 400
-            response['errors'] = {}
             response['success'] = False
-            response['errors']['400'] = str(e)
+            error = str(e)
+            if error.split(':')[0] == '0001':
+                error = 'Rimozione vietata: Menu.'
+            elif error.split(':')[0] == '0002':
+                error = "Rimozione vietata: ultima Pagina del sito."
+            elif error.split(':')[0] == '0003':
+                error = 'Rimozione vietata: eliminare prima i figli.'
+            elif error.split(':')[0] == '0004':
+                error = "Rimozione vietata: la pagina e' riferita da altre."
+            response['error'] = error
 
         except Exception as e:
             log.exception('Unknown Error.')
             self.session.rollback()
             self.request.response.status = 500
-            response['errors'] = {}
             response['success'] = False
-            response['errors']['500'] = str(e)
+            response['error'] = str(e)
 
         else:
             self.session.commit()
             self.request.response.status = 200
-            response['errors'] = {}
+            response['error'] = ''
             response['dataset'] = []
             response['dataset_len'] = 1
             response['success'] = True
