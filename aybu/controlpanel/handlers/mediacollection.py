@@ -17,19 +17,22 @@ limitations under the License.
 """
 
 from aybu.core.exc import QuotaError
-from aybu.core.models import (Node,
+from aybu.core.models import (Image,
+                              Node,
                               MediaCollectionPage,
                               MediaCollectionPageInfo,
                               MediaItemPage,
                               MediaItemPageInfo,
                               View)
 from aybu.core.utils.modifiers import urlify
+from aybu.website.lib import get_pufferfish_paths
 from pyramid_handlers import action
 from . base import BaseHandler
 from sqlalchemy.orm.exc import NoResultFound
 import pyramid.security
 from urlparse import urlparse
 import collections
+from functools import partial
 import json
 
 
@@ -45,6 +48,8 @@ class MediaCollectionPageHandler(BaseHandler):
     def show_html_view(self):
 
         response = dict(language=self.request.language,
+                        get_paths_for=partial(get_pufferfish_paths,
+                                              self.request),
                         items=[])
 
         try:
@@ -71,7 +76,6 @@ class MediaCollectionPageHandler(BaseHandler):
             response['msg'] = str(e)
 
         else:
-            self.session.commit()
             response['node'] = collection
 
         finally:
@@ -169,10 +173,12 @@ class MediaItemPageHandler(BaseHandler):
                 dictified = item.dictify()
                 dictified['file'] = {}
                 if not item.file is None:
+                    item.file.set_paths(**get_pufferfish_paths(self.request,
+                                                               Image))
                     dictified['file'] = item.file.to_dict()
-                dictified['translations'] = [t.dictify()
-                                             for t in item.translations
-                                             if t.lang == self.request.language]
+                dictified['translations'] = [
+                        t.dictify() for t in item.translations
+                                    if t.lang == self.request.language]
                 items.append(dictified)
 
         except KeyError as e:
@@ -207,7 +213,7 @@ class MediaItemPageHandler(BaseHandler):
             response['success'] = True
             response['dataset'] = items
             response['dataset_length'] = len(response['dataset'])
-            response['msg'] = self.request.translate("MediaItemPageInfo found.")
+            response['msg'] = self.request.translate("MediaItemPageInfo found")
 
         finally:
             return response
@@ -230,17 +236,19 @@ class MediaItemPageHandler(BaseHandler):
                 dictified = item.dictify()
                 dictified['file'] = {}
                 if not item.file is None:
+                    item.file.set_paths(**get_pufferfish_paths(self.request,
+                                           Image))
                     dictified['file'] = item.file.to_dict()
-                dictified['translations'] = [t.dictify()
-                                             for t in item.translations
-                                             if t.lang == self.request.language]
+                dictified['translations'] = [
+                        t.dictify() for t in item.translations
+                                    if t.lang == self.request.language]
                 items.append(dictified)
 
         except KeyError as e:
             self.log.exception('Not URL param in the request.')
             self.session.rollback()
             self.request.response.status = 400
-            response['msg'] = self.request.translate("Missing parameter: 'url'.")
+            response['msg'] = self.request.translate("Missing parameter 'url'")
 
         except NoResultFound as e:
             msg = "No MediaPageInfo found: %s" % parent_url
@@ -260,7 +268,7 @@ class MediaItemPageHandler(BaseHandler):
             response['success'] = True
             response['dataset'] = items
             response['dataset_length'] = len(response['dataset'])
-            response['msg'] = self.request.translate("MediaItemPageInfo found.")
+            response['msg'] = self.request.translate("MediaItemPageInfo found")
 
         finally:
             return response
@@ -279,7 +287,7 @@ class MediaItemPageHandler(BaseHandler):
             self.log.exception('Not ID param in the request.')
             self.session.rollback()
             self.request.response.status = 400
-            response['msg'] = self.request.translate("Missing parameter: 'id'.")
+            response['msg'] = self.request.translate("Missing parameter 'id'")
 
         except NoResultFound as e:
             msg = "No MediaItemPage found: %s" % id_
@@ -299,7 +307,7 @@ class MediaItemPageHandler(BaseHandler):
             response['success'] = True
             response['dataset'] = [id_]
             response['dataset_length'] = len(response['dataset'])
-            response['msg'] = self.request.translate("MediaItemPage found.")
+            response['msg'] = self.request.translate("MediaItemPage found")
 
         finally:
             return response
@@ -326,7 +334,7 @@ class MediaItemPageHandler(BaseHandler):
             self.log.exception('Not ID param in the request.')
             self.session.rollback()
             self.request.response.status = 400
-            response['msg'] = self.request.translate("Missing parameter: 'id'.")
+            response['msg'] = self.request.translate("Missing parameter: 'id'")
 
         except NoResultFound as e:
             msg = "No MediaItemPage found: %s" % id_
@@ -346,7 +354,7 @@ class MediaItemPageHandler(BaseHandler):
             response['success'] = True
             response['dataset'] = [id_]
             response['dataset_length'] = len(response['dataset'])
-            response['msg'] = self.request.translate("MediaItemPage updated.")
+            response['msg'] = self.request.translate("MediaItemPage updated")
 
         finally:
             return response

@@ -16,6 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from aybu.website.lib import get_pufferfish_paths
 from pyramid_handlers import action
 from aybu.core.models import File
 from . base import BaseHandler
@@ -45,8 +46,8 @@ class FileHandler(BaseHandler):
         try:
             name = self.request.params['name']
             up_file = self.request.POST['file']
-            obj = File(session=self.session, source=up_file.file, name=name)
-            self.session.flush()
+            obj = File(source=up_file.file, name=name, session=self.session,
+                       **get_pufferfish_paths(self.request, File))
 
         except Exception as e:
             self.handle_exception(e)
@@ -64,6 +65,7 @@ class FileHandler(BaseHandler):
         try:
             id_ = int(self.request.params['id'])
             obj = File.get(self.session, id_)
+            obj.set_paths(**get_pufferfish_paths(self.request, File))
             obj.delete()
             self.session.flush()
 
@@ -82,6 +84,7 @@ class FileHandler(BaseHandler):
         num_files = File.count(self.session)
         self.res = dict(datalen=num_files, data=[])
         for f in File.all(self.session):
+            f.set_paths(**get_pufferfish_paths(self.request, File))
             d = f.to_dict(ref_pages=True)
             self.res['data'].append(d)
 

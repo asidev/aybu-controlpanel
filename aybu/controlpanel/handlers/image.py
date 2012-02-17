@@ -16,6 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from aybu.website.lib import get_pufferfish_paths
 from pyramid_handlers import action
 from sqlalchemy.orm.exc import NoResultFound
 from aybu.core.models import Image
@@ -47,8 +48,8 @@ class ImageHandler(BaseHandler):
         try:
             name = self.request.params['name']
             up_file = self.request.POST['file']
-            image = Image(source=up_file.file, name=name, session=self.session)
-            self.session.flush()
+            image = Image(source=up_file.file, name=name, session=self.session,
+                          **get_pufferfish_paths(self.request, Image))
 
         except Exception as e:
             self.handle_exception(e)
@@ -69,10 +70,12 @@ class ImageHandler(BaseHandler):
 
             try:
                 id_ = int(self.request.params['id'])
+
             except KeyError:
                 raise NoResultFound('Missing id')
 
             image = Image.get(self.session, id_)
+            image.set_paths(**get_pufferfish_paths(self.request, Image))
             valid = False
 
             if 'name' in self.request.params:
@@ -80,7 +83,8 @@ class ImageHandler(BaseHandler):
                 name = self.request.params['name']
                 if name != image.name:
 
-                    self.log.debug("Updating name of image %d to %s", id_, name)
+                    self.log.debug("Updating name of image %d to %s",
+                                   id_, name)
                     if len(name) < 1:
                         raise TypeError("Il nome non può essere vuoto")
 
@@ -106,7 +110,8 @@ class ImageHandler(BaseHandler):
             self.res['errors']['id'] = 'Image not found'
 
         except TypeError as e:
-            self.log.exception('Invalid name %s' % (self.request.params['name']))
+            self.log.exception('Invalid name %s',
+                               self.request.params['name'])
             self.res['success'] = False
             self.res['errors']['name'] = str(e)
 
@@ -130,6 +135,7 @@ class ImageHandler(BaseHandler):
         try:
             id_ = int(self.request.params['id'])
             image = Image.get(self.session, id_)
+            image.set_paths(**get_pufferfish_paths(self.request, Image))
             image.delete()
 
         except Exception as e:
@@ -146,9 +152,14 @@ class ImageHandler(BaseHandler):
     @action(renderer='json',
            permission=pyramid.security.ALL_PERMISSIONS)
     def list(self):
+        data = []
+        images = Image.all(self.session)
+        for image in images:
+            image.set_paths(**get_pufferfish_paths(self.request, Image))
+            data.append(image.to_dict(ref_pages=True))
+
         self.res = {
-            'data': [img.to_dict(ref_pages=True)
-                     for img in Image.all(self.session)],
+            'data': data,
             'success': True,
         }
         self.res['datalen'] = len(self.res['data'])

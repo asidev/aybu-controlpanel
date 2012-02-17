@@ -25,6 +25,7 @@ from aybu.core.models import (Language,
                               Setting)
 from aybu.core.models import Logo  # this is used by a lookup on globals()
 from aybu.core.utils.modifiers import urlify
+from aybu.website.lib import get_pufferfish_paths
 from . base import BaseHandler
 
 
@@ -120,13 +121,15 @@ class AdminHandler(BaseHandler):
             source = self.request.params['file']
             page = PageInfo.get(self.session, id_)
             self.log.debug("Updating banner for page '{}'".format(page.label))
+            paths = get_pufferfish_paths(self.request, Banner)
             for banner in page.node.banners:
+                banner.set_paths(**paths)
                 banner.delete()
-            page.node.banners = []
 
-            page.node.banners.append(
-                Banner(source=source.file, name=name, session=self.session)
-            )
+            page.node.banners = []
+            b = Banner(source=source.file, name=name, session=self.session,
+                       **paths)
+            page.node.banners.append(b)
             self.session.flush()
 
         except Exception:
@@ -149,9 +152,11 @@ class AdminHandler(BaseHandler):
     def remove_page_banners(self):
         res = dict(success=False)
         try:
+            paths = get_pufferfish_paths(self.request, Banner)
             page = PageInfo.get(self.session,
                                 self.request.params['nodeinfo_id'])
             for banner in page.node.banners:
+                banner.set_paths(**paths)
                 banner.delete()
 
             self.session.flush()
@@ -183,6 +188,7 @@ class AdminHandler(BaseHandler):
             errors[name] = None
             messages[name] = None
             cls = globals()[name.title()]
+            paths = get_pufferfish_paths(self.request, cls)
 
             # handle delete first
             key = 'remove_{}'.format(name)
@@ -192,8 +198,10 @@ class AdminHandler(BaseHandler):
             if self.request.params.get(key, None):
                 obj = cls.get_default(self.session)
                 if obj:
+                    obj.set_paths(**paths)
                     self.log.debug("Removing default %s", name)
                     obj.delete()
+                    self.session.flush()
                     purge_all = True
                     commit = True
                 else:
@@ -211,10 +219,13 @@ class AdminHandler(BaseHandler):
                 try:
                     obj = cls.get_default(self.session)
                     if obj:
+                        obj.set_paths(**paths)
                         self.log.debug("Removing default banner first")
                         obj.delete()
-                    cls(name=filename, source=source.file,
-                        session=self.session, default=True)
+                        self.session.flush()
+
+                    obj = cls(name=filename, source=source.file,
+                              session=self.session, default=True, **paths)
                     message = u'{} aggiornato con successo'\
                                                         .format(name.title())
                     messages[key] = self.request.translate(message)
