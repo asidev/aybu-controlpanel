@@ -273,7 +273,7 @@ class MediaItemPageHandler(BaseHandler):
 
         try:
             id_ = self.request.matchdict['id']
-            MediaItemPage.delete(self.session, id_)
+            MediaItemPage.remove(self.session, id_)
 
         except KeyError as e:
             self.log.exception('Not ID param in the request.')
