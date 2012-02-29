@@ -508,10 +508,14 @@ class StructureHandler(BaseHandler):
                 previous_node_id = int(previous_node_id)
 
             # The ID of the next node of 'node_id' in the new position.
-            # next_node_id = request.params.get('next_node_id')
-            # it is useless due to changes of move operation.
+            next_node_id = self.request.params.get('next_node_id')
+            if next_node_id == '':
+                next_node_id = None
+            elif not next_node_id is None:
+                next_node_id = int(next_node_id)
 
-            Node.move(self.session, node_id, parent_id, previous_node_id)
+            Node.move(self.session,
+                      node_id, parent_id, previous_node_id, next_node_id)
 
         except (TypeError, NoResultFound, ConstraintError) as e:
             log.exception('Bad request params.')
