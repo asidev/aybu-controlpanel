@@ -82,11 +82,13 @@ class StructureHandler(BaseHandler):
             items = []
             for page in Page.all(self.session):
                 translation = page.get_translation(language)
-                item = '["{}","{}"]'.format(translation.title.replace('"', "'"),
-                                            translation.url + '.html')
+                item = unicode('["{}","{}.html"]')
+                item = item.format(translation.title.replace('"', "'"),
+                                   translation.url)
                 items.append(item)
 
-            response = 'var tinyMCELinkList = new Array(%s);' % ', '.join(items)
+            response = unicode('var tinyMCELinkList = new Array({});')
+            response = response.format(', '.join(items))
 
         except Exception as e:
             log.exception(e)
