@@ -207,7 +207,7 @@ class AdminHandler(BaseHandler):
             source = self.request.params.get(key)
             if not source is None and not source == '':
                 self.log.debug("Updating default %s", name)
-                filename = Setting.get(self.session, name).value
+                filename = source.filename
                 try:
                     cls(name=filename, source=source.file,
                         session=self.session, default=True)
