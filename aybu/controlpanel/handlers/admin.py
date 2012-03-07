@@ -209,10 +209,6 @@ class AdminHandler(BaseHandler):
                 self.log.debug("Updating default %s", name)
                 filename = Setting.get(self.session, name).value
                 try:
-                    obj = cls.get_default(self.session)
-                    if obj:
-                        self.log.debug("Removing default banner first")
-                        obj.delete()
                     cls(name=filename, source=source.file,
                         session=self.session, default=True)
                     message = u'{} aggiornato con successo'\
