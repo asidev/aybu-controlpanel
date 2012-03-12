@@ -8,3 +8,4 @@ syntax: glob
 ./versiontools*
 ./data/sessions
 .rvmrc
+.env
