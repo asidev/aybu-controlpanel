@@ -139,8 +139,10 @@ class SettingHandler(BaseHandler):
             start = None if start is None else int(start)
             limit = self.request.params.get('limit')
             limit = None if limit is None else int(limit)
-            sort_by = self.request.params.get('sort')
-            sort_order = self.request.params.get('dir', 'desc').lower()
+            sort_by = self.request.params.get('sort', 'name')
+            sort_order = self.request.params.get('dir', 'asc').lower()
+            if sort_by == 'value':
+                sort_by = 'raw_value'
 
             response['dataset_len'] = Setting.count(self.session,
                                                     self.request.user)
