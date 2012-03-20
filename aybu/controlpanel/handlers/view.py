@@ -46,6 +46,9 @@ class ViewHandler(BaseHandler):
 
         for view in View.all(session):
 
+            if view.name.lower() == 'media collection':
+                continue
+
             item = dict(id=view.id, description=None)
 
             if not view.descriptions:
