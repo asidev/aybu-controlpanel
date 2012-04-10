@@ -25,8 +25,10 @@ from . language import LanguageHandler
 from . setting import SettingHandler
 from . admin import AdminHandler
 from . view import ViewHandler
-from .pageinfo import PageInfoHandler
-from .mediacollection import MediaCollectionPageHandler, MediaItemPageHandler
+from . pageinfo import PageInfoHandler
+from . mediacollection import MediaCollectionPageHandler, MediaItemPageHandler
+from . pagebanner import PageBannerHandler
+from . banner import BannerHandler
 
 from pyramid.httpexceptions import HTTPFound
 
@@ -34,7 +36,7 @@ __all__ = ['LoginHandler', 'ContentHandler', 'ImageHandler', 'FileHandler',
            'StructureHandler', 'LanguageHandler', 'SettingHandler',
            'AdminHandler', 'ViewHandler', 'redirect_to_login',
            'PageInfoHandler', 'MediaCollectionPageHandler',
-           'MediaItemPageHandler']
+           'MediaItemPageHandler', 'PageBannerHandler', 'BannerHandler']
 
 
 def redirect_to_login(context, request):

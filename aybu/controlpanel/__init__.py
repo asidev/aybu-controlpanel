@@ -75,6 +75,30 @@ def includeme(config):
 
 def add_handlers(config):
 
+    config.add_handler('PageBanner.create', '/admin/pagebanner',
+                       handler='aybu.controlpanel.handlers.PageBannerHandler',
+                       factory='aybu.core.authentication.Authenticated',
+                       request_method='POST',
+                       action='create')
+
+    config.add_handler('PageBanner.read', '/admin/pagebanner',
+                       handler='aybu.controlpanel.handlers.PageBannerHandler',
+                       factory='aybu.core.authentication.Authenticated',
+                       request_method='GET',
+                       action='read')
+
+    config.add_handler('PageBanner.delete', '/admin/pagebanner/{node_id}/{file_id}',
+                       handler='aybu.controlpanel.handlers.PageBannerHandler',
+                       factory='aybu.core.authentication.Authenticated',
+                       request_method='DELETE',
+                       action='delete')
+
+    config.add_handler('Banner.read', '/admin/banner',
+                       handler='aybu.controlpanel.handlers.BannerHandler',
+                       factory='aybu.core.authentication.Authenticated',
+                       request_method='GET',
+                       action='read')
+
     config.add_handler('MediaItemPage.update', '/admin/mediaitempage/{id}',
                        handler='aybu.controlpanel.handlers.MediaItemPageHandler',
                        factory='aybu.core.authentication.Authenticated',
