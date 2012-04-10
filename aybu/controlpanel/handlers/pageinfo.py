@@ -39,7 +39,9 @@ class PageInfoHandler(BaseHandler):
             url = urlparse(self.request.params['url'])
             path = url.path
             if path.startswith('/admin'):
-                path = url.path.replace('/admin', '', 1)
+                path = path.replace('/admin', '', 1)
+            if path.endswith('.html'):
+                path = path.replace('.html', '', 1)
             pageinfo = PageInfo.get_by_url(self.session, path)
             self.log.debug('Found %s using %s', pageinfo, path)
             pageinfo = pageinfo.dictify(excludes=('__class__',
@@ -58,7 +60,7 @@ class PageInfoHandler(BaseHandler):
             response['msg'] = self.request.translate("Missing parameter: 'url'.")
 
         except NoResultFound as e:
-            self.log.exception('No PageInfo: %s.', url)
+            self.log.exception('No PageInfo: %s.', path)
             self.session.rollback()
             self.request.response.status = 404
             response['msg'] = self.request.translate("No PageInfo found.")
