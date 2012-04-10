@@ -269,8 +269,7 @@ class StructureHandler(BaseHandler):
             elif type_ == 'InternalLink':
 
                 linked_to = self.request.params.get('linked_to')
-                if not linked_to is None:
-                    linked_to = InternalLink.get(self.session, linked_to)
+                linked_to = Page.get(self.session, linked_to)
 
                 node = InternalLink(enabled=enabled,
                                     hidden=hidden,
