@@ -99,6 +99,12 @@ def add_handlers(config):
                        request_method='GET',
                        action='read')
 
+    config.add_handler('Banner.create', '/admin/banner',
+                       handler='aybu.controlpanel.handlers.BannerHandler',
+                       factory='aybu.core.authentication.Authenticated',
+                       request_method='POST',
+                       action='create')
+
     config.add_handler('MediaItemPage.update', '/admin/mediaitempage/{id}',
                        handler='aybu.controlpanel.handlers.MediaItemPageHandler',
                        factory='aybu.core.authentication.Authenticated',
