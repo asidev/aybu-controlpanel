@@ -16,7 +16,6 @@ limitations under the License.
 
 from aybu.core.models import Page
 from aybu.core.models import PageBanner
-from aybu.core.utils.modifiers import urlify
 from pyramid_handlers import action
 from . base import BaseHandler
 from sqlalchemy.orm.exc import NoResultFound
@@ -39,7 +38,7 @@ class PageBannerHandler(BaseHandler):
         response = self._response.copy()
 
         try:
-
+            page_id = self.request.matchdict['page_id']
             # Convert JSON request param into dictionary.
             params = json.loads(self.request.params['dataset'])
             if not isinstance(params, collections.Sequence):
@@ -47,9 +46,10 @@ class PageBannerHandler(BaseHandler):
 
             items = []
             for param in params:
-                obj = PageBanner(node_id=param['page_id'], file_id=param['file']['id'])
+                obj = PageBanner(node_id=page_id, file_id=param['id'])
                 self.session.add(obj)
-                items.append(obj.dictify())
+                self.session.flush()
+                items.append(obj.banner.to_dict())
 
         except KeyError as e:
             self.log.exception('Missing params in the request.')
@@ -80,9 +80,9 @@ class PageBannerHandler(BaseHandler):
         response = self._response.copy()
 
         try:
-            page_id = self.request.params['page_id']
+            page_id = self.request.matchdict['page_id']
             page = Page.get(self.session, page_id)
-            items = [obj.dictify() for obj in page.banners]
+            items = [obj.banner.to_dict() for obj in page.banners]
 
         except KeyError as e:
             self.log.exception('Not URL param in the request.')
@@ -108,7 +108,7 @@ class PageBannerHandler(BaseHandler):
             response['success'] = True
             response['dataset'] = items
             response['dataset_length'] = len(response['dataset'])
-            response['msg'] = self.request.translate("Page was found.")
+            response['msg'] = self.request.translate("Dataset found.")
 
         finally:
             return response
@@ -120,7 +120,7 @@ class PageBannerHandler(BaseHandler):
         response = self._response.copy()
 
         try:
-            node_id = self.request.matchdict['node_id']
+            node_id = self.request.matchdict['page_id']
             file_id = self.request.matchdict['file_id']
             PageBanner.get(self.session, (node_id, file_id)).delete()
 
