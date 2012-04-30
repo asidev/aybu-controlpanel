@@ -75,23 +75,29 @@ def includeme(config):
 
 def add_handlers(config):
 
-    config.add_handler('PageBanner.create', '/admin/pagebanner',
+    config.add_handler('PageBanner.create', '/admin/pagebanner/{page_id}',
                        handler='aybu.controlpanel.handlers.PageBannerHandler',
                        factory='aybu.core.authentication.Authenticated',
                        request_method='POST',
                        action='create')
 
-    config.add_handler('PageBanner.read', '/admin/pagebanner',
+    config.add_handler('PageBanner.read', '/admin/pagebanner/{page_id}',
                        handler='aybu.controlpanel.handlers.PageBannerHandler',
                        factory='aybu.core.authentication.Authenticated',
                        request_method='GET',
                        action='read')
 
-    config.add_handler('PageBanner.delete', '/admin/pagebanner/{node_id}/{file_id}',
+    config.add_handler('PageBanner.delete', '/admin/pagebanner/{page_id}/{file_id}',
                        handler='aybu.controlpanel.handlers.PageBannerHandler',
                        factory='aybu.core.authentication.Authenticated',
                        request_method='DELETE',
                        action='delete')
+
+    config.add_handler('Banner.create', '/admin/banner',
+                       handler='aybu.controlpanel.handlers.BannerHandler',
+                       factory='aybu.core.authentication.Authenticated',
+                       request_method='POST',
+                       action='create')
 
     config.add_handler('Banner.read', '/admin/banner',
                        handler='aybu.controlpanel.handlers.BannerHandler',
@@ -99,11 +105,17 @@ def add_handlers(config):
                        request_method='GET',
                        action='read')
 
-    config.add_handler('Banner.create', '/admin/banner',
+    config.add_handler('Banner.update', '/admin/banner/{id}',
                        handler='aybu.controlpanel.handlers.BannerHandler',
                        factory='aybu.core.authentication.Authenticated',
-                       request_method='POST',
-                       action='create')
+                       request_method='PUT',
+                       action='update')
+
+    config.add_handler('Banner.delete', '/admin/banner/{id}',
+                       handler='aybu.controlpanel.handlers.BannerHandler',
+                       factory='aybu.core.authentication.Authenticated',
+                       request_method='DELETE',
+                       action='delete')
 
     config.add_handler('MediaItemPage.update', '/admin/mediaitempage/{id}',
                        handler='aybu.controlpanel.handlers.MediaItemPageHandler',

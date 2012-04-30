@@ -32,7 +32,7 @@ class PageInfoHandler(BaseHandler):
     _response = dict(success=False, msg='', dataset=[], dataset_length=0)
 
     @action(renderer='json',
-           permission=pyramid.security.ALL_PERMISSIONS)
+            permission=pyramid.security.ALL_PERMISSIONS)
     def search(self):
         response = self._response.copy()
         try:
