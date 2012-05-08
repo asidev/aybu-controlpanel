@@ -93,6 +93,30 @@ def add_handlers(config):
                        request_method='DELETE',
                        action='delete')
 
+    config.add_handler('Background.create', '/admin/banner',
+                       handler='aybu.controlpanel.handlers.BackgroundHandler',
+                       factory='aybu.core.authentication.Authenticated',
+                       request_method='POST',
+                       action='create')
+
+    config.add_handler('Background.read', '/admin/banner',
+                       handler='aybu.controlpanel.handlers.BackgroundHandler',
+                       factory='aybu.core.authentication.Authenticated',
+                       request_method='GET',
+                       action='read')
+
+    config.add_handler('Background.update', '/admin/banner/{id}',
+                       handler='aybu.controlpanel.handlers.BackgroundHandler',
+                       factory='aybu.core.authentication.Authenticated',
+                       request_method='PUT',
+                       action='update')
+
+    config.add_handler('Background.delete', '/admin/banner/{id}',
+                       handler='aybu.controlpanel.handlers.BackgroundHandler',
+                       factory='aybu.core.authentication.Authenticated',
+                       request_method='DELETE',
+                       action='delete')
+
     config.add_handler('Banner.create', '/admin/banner',
                        handler='aybu.controlpanel.handlers.BannerHandler',
                        factory='aybu.core.authentication.Authenticated',
