@@ -100,6 +100,11 @@ class AdminHandler(BaseHandler):
         tiny = True if "tiny" in self.request.params else False
         return dict(page='files', tiny=tiny)
 
+    @action(renderer='/admin/background.mako',
+            permission=pyramid.security.ALL_PERMISSIONS)
+    def background(self):
+        return dict(page='background')
+
     @action(renderer='/admin/settings.mako',
             permission=pyramid.security.ALL_PERMISSIONS)
     def settings(self):
