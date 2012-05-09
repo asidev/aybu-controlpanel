@@ -62,9 +62,9 @@ class BackgroundHandler(BaseHandler):
         try:
             name = self.request.params['name']
             up_file = self.request.POST['file']
-            banner = Background(source=up_file.file,
-                                name=name,
-                                session=self.session)
+            item = Background(source=up_file.file,
+                              name=name,
+                              session=self.session)
             self.session.flush()
 
         except Exception as e:
@@ -76,7 +76,7 @@ class BackgroundHandler(BaseHandler):
         else:
             self.session.commit()
             response['success'] = True
-            response['dataset'] = [banner.to_dict()]
+            response['dataset'] = [item.to_dict()]
             response['dataset_length'] = len(response['dataset'])
             response['msg'] = self.request.translate("Background created.")
 
