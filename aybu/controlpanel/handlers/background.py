@@ -19,6 +19,7 @@ from pyramid_handlers import action
 from sqlalchemy.orm.exc import NoResultFound
 from . base import BaseHandler
 import pyramid.security
+import json
 
 
 __all__ = ['BackgroundHandler']
@@ -91,7 +92,9 @@ class BackgroundHandler(BaseHandler):
 
         try:
             id_ = int(self.request.matchdict['id'])
+            dataset = json.loads(self.request.params['dataset'])
             item = Background.get(self.session, id_)
+            item.weight = dataset['weight']
 
         except KeyError as e:
             self.log.exception('Bad request.')
