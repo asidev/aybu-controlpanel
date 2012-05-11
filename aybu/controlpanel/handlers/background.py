@@ -91,8 +91,7 @@ class BackgroundHandler(BaseHandler):
 
         try:
             id_ = int(self.request.matchdict['id'])
-            banner = Background.get(self.session, id_)
-            # FIXME: add code to update banner info.
+            item = Background.get(self.session, id_)
 
         except KeyError as e:
             self.log.exception('Bad request.')
@@ -123,10 +122,10 @@ class BackgroundHandler(BaseHandler):
         else:
             self.session.commit()
             response['success'] = True
-            response['dataset'] = [banner.to_dict()]
+            response['dataset'] = [item.to_dict()]
             response['dataset_length'] = len(response['dataset'])
             response['msg'] = self.request.translate("Background was updated.")
-            self.proxy.invalidate(url=banner.url)
+            self.proxy.invalidate(url=item.url)
 
         finally:
             return response
