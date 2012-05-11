@@ -115,6 +115,55 @@ class PageBannerHandler(BaseHandler):
 
     @action(renderer='json',
             permission=pyramid.security.ALL_PERMISSIONS)
+    def update(self):
+
+        response = self._response.copy()
+
+        try:
+            id_ = int(self.request.matchdict['id'])
+            dataset = json.loads(self.request.params['dataset'])
+            item = Background.get(self.session, id_)
+            item.weight = dataset['weight']
+
+        except KeyError as e:
+            self.log.exception('Bad request.')
+            self.session.rollback()
+            self.request.response.status = 400
+            response['success'] = False
+            response['msg'] = str(e)
+
+        except NoResultFound as e:
+            self.log.exception('Cannot found Background.')
+            self.session.rollback()
+            self.request.response.status = 400
+            response['success'] = False
+            response['msg'] = str(e)
+
+        except TypeError as e:
+            self.log.exception('Invalid name')
+            self.request.response.status = 400
+            response['success'] = False
+            response['msg'] = str(e)
+
+        except Exception as e:
+            self.log.exception('Unknown error.')
+            self.session.rollback()
+            self.request.response.status = 500
+            response['msg'] = str(e)
+
+        else:
+            self.session.commit()
+            response['success'] = True
+            response['dataset'] = [item.to_dict()]
+            response['dataset_length'] = len(response['dataset'])
+            response['msg'] = self.request.translate("Background was updated.")
+            self.proxy.invalidate(url=item.url)
+
+        finally:
+            return response
+
+    @action(renderer='json',
+            permission=pyramid.security.ALL_PERMISSIONS)
     def delete(self):
 
         response = self._response.copy()
