@@ -312,9 +312,10 @@ class MediaItemPageHandler(BaseHandler):
 
         try:
             id_ = self.request.matchdict['id']
-            MediaItemPage.get(self.session, id_)
+            item = MediaItemPage.get(self.session, id_)
             # Convert JSON request param into dictionary.
             params = json.loads(self.request.params['dataset'])
+            item.weight = params['weight']
             translation = params['translations'][0]
             info = MediaItemPageInfo.get(self.session, translation['id'])
             info.label = translation['label']

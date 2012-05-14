@@ -19,6 +19,7 @@ from pyramid_handlers import action
 from sqlalchemy.orm.exc import NoResultFound
 from . base import BaseHandler
 import pyramid.security
+import json
 
 
 __all__ = ['BackgroundHandler']
@@ -91,8 +92,9 @@ class BackgroundHandler(BaseHandler):
 
         try:
             id_ = int(self.request.matchdict['id'])
-            banner = Background.get(self.session, id_)
-            # FIXME: add code to update banner info.
+            dataset = json.loads(self.request.params['dataset'])
+            item = Background.get(self.session, id_)
+            item.weight = dataset['weight']
 
         except KeyError as e:
             self.log.exception('Bad request.')
@@ -123,10 +125,10 @@ class BackgroundHandler(BaseHandler):
         else:
             self.session.commit()
             response['success'] = True
-            response['dataset'] = [banner.to_dict()]
+            response['dataset'] = [item.to_dict()]
             response['dataset_length'] = len(response['dataset'])
             response['msg'] = self.request.translate("Background was updated.")
-            self.proxy.invalidate(url=banner.url)
+            self.proxy.invalidate(url=item.url)
 
         finally:
             return response
