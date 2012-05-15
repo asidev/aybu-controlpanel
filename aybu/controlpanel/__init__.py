@@ -151,11 +151,11 @@ def add_handlers(config):
                        factory='aybu.core.authentication.Authenticated',
                        request_method='PUT',
                        action='update')
-    config.add_handler('MediaItemPage.update', '/admin/mediaitempage',
+    config.add_handler('MediaItemPage.batch_update', '/admin/mediaitempage',
                        handler='aybu.controlpanel.handlers.MediaItemPageHandler',
                        factory='aybu.core.authentication.Authenticated',
                        request_method='PUT',
-                       action='update')
+                       action='batch_update')
 
     config.add_handler('MediaItemPage.delete', '/admin/mediaitempage/{id}',
                        handler='aybu.controlpanel.handlers.MediaItemPageHandler',
