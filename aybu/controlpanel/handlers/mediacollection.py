@@ -311,14 +311,17 @@ class MediaItemPageHandler(BaseHandler):
         response = self._response.copy()
 
         try:
-            id_ = self.request.matchdict.get('id')
-            if not id_ is None:
-                # Convert JSON request param into dictionary.
-                params = json.loads(self.request.params['dataset'])
-                self._update(params)
-            else:
-                for params in json.loads(self.request.params['dataset']):
-                    self._update(params)
+            id_ = self.request.matchdict['id']
+            # Convert JSON request param into dictionary.
+            params = json.loads(self.request.params['dataset'])
+            item = MediaItemPage.get(self.session, id_)
+            item.weight = params['weight']
+            translation = params['translations'][0]
+            info = MediaItemPageInfo.get(self.session, translation['id'])
+            info.label = translation['label']
+            info.title = info.label
+            info.url_part = urlify(info.title)
+            info.content = translation['content']
 
         except KeyError as e:
             self.log.exception('Not needed param in the request.')
@@ -349,13 +352,38 @@ class MediaItemPageHandler(BaseHandler):
         finally:
             return response
 
-    def _update(self, params):
-        item = MediaItemPage.get(self.session, params['id'])
-        item.weight = params['weight']
-        translation = params['translations'][0]
-        info = MediaItemPageInfo.get(self.session, translation['id'])
-        info.label = translation['label']
-        info.title = info.label
-        info.url_part = urlify(info.title)
-        info.content = translation['content']
-        return item
+    @action(renderer='json',
+            permission=pyramid.security.ALL_PERMISSIONS)
+    def batch_update(self):
+
+        response = self._response.copy()
+
+        try:
+            for params in json.loads(self.request.params['dataset']):
+                filters = (MediaItemPage.id == params['id'],)
+                values = dict(weight=params['weight'])
+                MediaItemPage.search(self.session,
+                                     filters=filters,
+                                     return_query=True).update(values)
+
+        except KeyError as e:
+            self.log.exception('Not needed param in the request.')
+            self.session.rollback()
+            self.request.response.status = 400
+            response['msg'] = self.request.translate(str(e))
+
+        except Exception as e:
+            self.log.exception('Unknown error.')
+            self.session.rollback()
+            self.request.response.status = 500
+            response['msg'] = str(e)
+
+        else:
+            self.session.commit()
+            response['success'] = True
+            response['dataset'] = []
+            response['dataset_length'] = len(response['dataset'])
+            response['msg'] = self.request.translate("MediaItemPage updated.")
+
+        finally:
+            return response
