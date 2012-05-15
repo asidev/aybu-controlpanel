@@ -105,7 +105,12 @@ def add_handlers(config):
                        request_method='GET',
                        action='read')
 
-    config.add_handler('Background.update', '/admin/background/{id}',
+    config.add_handler('Background.single_update', '/admin/background/{id}',
+                       handler='aybu.controlpanel.handlers.BackgroundHandler',
+                       factory='aybu.core.authentication.Authenticated',
+                       request_method='PUT',
+                       action='update')
+    config.add_handler('Background.update', '/admin/background',
                        handler='aybu.controlpanel.handlers.BackgroundHandler',
                        factory='aybu.core.authentication.Authenticated',
                        request_method='PUT',
@@ -141,7 +146,12 @@ def add_handlers(config):
                        request_method='DELETE',
                        action='delete')
 
-    config.add_handler('MediaItemPage.update', '/admin/mediaitempage/{id}',
+    config.add_handler('MediaItemPage.single_update', '/admin/mediaitempage/{id}',
+                       handler='aybu.controlpanel.handlers.MediaItemPageHandler',
+                       factory='aybu.core.authentication.Authenticated',
+                       request_method='PUT',
+                       action='update')
+    config.add_handler('MediaItemPage.update', '/admin/mediaitempage',
                        handler='aybu.controlpanel.handlers.MediaItemPageHandler',
                        factory='aybu.core.authentication.Authenticated',
                        request_method='PUT',

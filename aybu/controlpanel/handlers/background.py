@@ -91,10 +91,15 @@ class BackgroundHandler(BaseHandler):
         response = self._response.copy()
 
         try:
-            id_ = int(self.request.matchdict['id'])
-            dataset = json.loads(self.request.params['dataset'])
-            item = Background.get(self.session, id_)
-            item.weight = dataset['weight']
+            id_ = self.request.matchdict.get('id')
+            if not id_ is None:
+                params = json.loads(self.request.params['dataset'])
+                item = Background.get(self.session, params['id'])
+                item.weight = params['weight']
+            else:
+                for params in json.loads(self.request.params['dataset']):
+                    item = Background.get(self.session, params['id'])
+                    item.weight = params['weight']
 
         except KeyError as e:
             self.log.exception('Bad request.')
@@ -125,7 +130,7 @@ class BackgroundHandler(BaseHandler):
         else:
             self.session.commit()
             response['success'] = True
-            response['dataset'] = [item.to_dict()]
+            response['dataset'] = []
             response['dataset_length'] = len(response['dataset'])
             response['msg'] = self.request.translate("Background was updated.")
             self.proxy.invalidate(url=item.url)
