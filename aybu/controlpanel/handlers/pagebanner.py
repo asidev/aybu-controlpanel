@@ -46,10 +46,14 @@ class PageBannerHandler(BaseHandler):
 
             items = []
             for param in params:
-                obj = PageBanner(node_id=page_id, file_id=param['id'])
+                file_id = param['banner']['id']
+                obj = PageBanner(node_id=page_id,
+                                 file_id=file_id)
                 self.session.add(obj)
                 self.session.flush()
-                items.append(obj.banner.to_dict())
+                items.append(dict(id=file_id,
+                                  page=page_id,
+                                  banner=obj.banner.to_dict()))
 
         except KeyError as e:
             self.log.exception('Missing params in the request.')
@@ -82,7 +86,10 @@ class PageBannerHandler(BaseHandler):
         try:
             page_id = self.request.matchdict['page_id']
             page = Page.get(self.session, page_id)
-            items = [obj.banner.to_dict() for obj in page.banners]
+            items = [dict(id=obj.banner.id,
+                          page=page_id,
+                          banner=obj.banner.to_dict())
+                     for obj in page.banners]
 
         except KeyError as e:
             self.log.exception('Not URL param in the request.')
@@ -120,9 +127,10 @@ class PageBannerHandler(BaseHandler):
         response = self._response.copy()
 
         try:
-            id_ = int(self.request.matchdict['id'])
+            page_id = int(self.request.matchdict['page_id'])
+            file_id = int(self.request.matchdict['file_id'])
             dataset = json.loads(self.request.params['dataset'])
-            item = Background.get(self.session, id_)
+            item = PageBanner.get(self.session, (page_id, file_id))
             item.weight = dataset['weight']
 
         except KeyError as e:
@@ -154,7 +162,57 @@ class PageBannerHandler(BaseHandler):
         else:
             self.session.commit()
             response['success'] = True
-            response['dataset'] = [item.to_dict()]
+            response['dataset'] = []
+            response['dataset_length'] = len(response['dataset'])
+            response['msg'] = self.request.translate("Background was updated.")
+            self.proxy.invalidate(url=item.url)
+
+        finally:
+            return response
+
+    @action(renderer='json',
+            permission=pyramid.security.ALL_PERMISSIONS)
+    def batch_update(self):
+
+        response = self._response.copy()
+
+        try:
+            for params in json.loads(self.request.params['dataset']):
+                item = PageBanner.get(self.session,
+                                     (params['page'],
+                                      params['banner']['id']))
+                item.weight = params['weight']
+
+        except KeyError as e:
+            self.log.exception('Bad request.')
+            self.session.rollback()
+            self.request.response.status = 400
+            response['success'] = False
+            response['msg'] = str(e)
+
+        except NoResultFound as e:
+            self.log.exception('Cannot found Background.')
+            self.session.rollback()
+            self.request.response.status = 400
+            response['success'] = False
+            response['msg'] = str(e)
+
+        except TypeError as e:
+            self.log.exception('Invalid name')
+            self.request.response.status = 400
+            response['success'] = False
+            response['msg'] = str(e)
+
+        except Exception as e:
+            self.log.exception('Unknown error.')
+            self.session.rollback()
+            self.request.response.status = 500
+            response['msg'] = str(e)
+
+        else:
+            self.session.commit()
+            response['success'] = True
+            response['dataset'] = []
             response['dataset_length'] = len(response['dataset'])
             response['msg'] = self.request.translate("Background was updated.")
             self.proxy.invalidate(url=item.url)

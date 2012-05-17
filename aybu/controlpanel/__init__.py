@@ -87,6 +87,20 @@ def add_handlers(config):
                        request_method='GET',
                        action='read')
 
+    config.add_handler('PageBanner.single_update',
+                       '/admin/pagebanner/{page_id}/{file_id}',
+                       handler='aybu.controlpanel.handlers.PageBannerHandler',
+                       factory='aybu.core.authentication.Authenticated',
+                       request_method='PUT',
+                       action='update')
+
+    config.add_handler('PageBanner.batch_update',
+                       '/admin/pagebanner/{page_id}',
+                       handler='aybu.controlpanel.handlers.PageBannerHandler',
+                       factory='aybu.core.authentication.Authenticated',
+                       request_method='PUT',
+                       action='batch_update')
+
     config.add_handler('PageBanner.delete', '/admin/pagebanner/{page_id}/{file_id}',
                        handler='aybu.controlpanel.handlers.PageBannerHandler',
                        factory='aybu.core.authentication.Authenticated',
@@ -162,6 +176,12 @@ def add_handlers(config):
                        factory='aybu.core.authentication.Authenticated',
                        request_method='DELETE',
                        action='delete')
+
+    config.add_handler('MediaItemPage.batch_delete', '/admin/mediaitempage',
+                       handler='aybu.controlpanel.handlers.MediaItemPageHandler',
+                       factory='aybu.core.authentication.Authenticated',
+                       request_method='DELETE',
+                       action='batch_delete')
 
     config.add_handler('MediaItemPage.create', '/admin/mediaitempage',
                        handler='aybu.controlpanel.handlers.MediaItemPageHandler',
