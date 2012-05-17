@@ -306,6 +306,38 @@ class MediaItemPageHandler(BaseHandler):
 
     @action(renderer='json',
             permission=pyramid.security.ALL_PERMISSIONS)
+    def batch_delete(self):
+
+        response = self._response.copy()
+
+        try:
+            for params in json.loads(self.request.params['dataset']):
+                MediaItemPage.remove(self.session, params['id'])
+
+        except KeyError as e:
+            self.log.exception('Not param in the request.')
+            self.session.rollback()
+            self.request.response.status = 400
+            response['msg'] = str(e)
+
+        except Exception as e:
+            self.log.exception('Unknown error.')
+            self.session.rollback()
+            self.request.response.status = 500
+            response['msg'] = str(e)
+
+        else:
+            self.session.commit()
+            response['success'] = True
+            response['dataset'] = []
+            response['dataset_length'] = len(response['dataset'])
+            response['msg'] = self.request.translate("MediaItemPage found.")
+
+        finally:
+            return response
+
+    @action(renderer='json',
+            permission=pyramid.security.ALL_PERMISSIONS)
     def update(self):
 
         response = self._response.copy()
