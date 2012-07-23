@@ -360,7 +360,7 @@ class StructureHandler(BaseHandler):
             info = node.get_translation(language)
 
             # Node attributes.
-            enabled = self.request.params.get('enabled')
+            enabled = self.request.params.get('enabled', 'off')
             if enabled is None:
                 enabled = node.enabled
             else:
