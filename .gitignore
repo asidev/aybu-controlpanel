@@ -1,0 +1,9 @@
+*.pyc
+*.ini
+.coverage
+dist
+aybu_controlpanel.egg-info
+versiontools*
+data/sessions
+.rvmrc
+.env
